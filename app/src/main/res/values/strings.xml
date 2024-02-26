@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Путеводитель ЗабКЛИ</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Настройки</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+
+    <string name="title_olympiads">Олимпиады</string>
+    <string name="title_news">Новости</string>
+    <string name="title_schedule">Расписание</string>
+
+    <string name="back_desciption">Назад</string>
+    <string name="forward_desciption">Вперёд</string>
+
+    <string name="settings_name">Настройки</string>
+    <string name="dark_mode_name">Включить тёмную тему</string>
+    <string name="dark_mode_description">Делает элементы приложения темнее</string>
+    <string name="changed_function_name">Отображать изменённые уроки</string>
+    <string name="changed_function_description">Показывает изменённые уроки в расписании</string>
+
+    <string name="survey_name">Анкетирование</string>
+    <string name="survey_description">Пройдите опрос для улучшения приложения</string>
+
+    <string name="ui_next_lesson_text">Следующий урок:</string>
+    <string name="ui_text_schedule">Расписание</string>
+    <string name="loading_lesson_name">Загрузка уроков…</string>
+    <string name="loading_lesson_time">Загрузка времени уроков…</string>
+    <string name="loading_day">Загрузка дня…</string>
+</resources>

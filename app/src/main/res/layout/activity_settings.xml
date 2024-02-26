@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SettingsActivity">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginStart="0dp"
+        android:id="@+id/appBarMain">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:id="@+id/toolbar"
+            android:contentInsetLeft="0dp"
+            android:contentInsetStart="0dp"
+            app:contentInsetLeft="0dp"
+            app:contentInsetStart="0dp"
+            android:contentInsetRight="0dp"
+            android:contentInsetEnd="0dp"
+            app:contentInsetRight="0dp"
+            app:contentInsetEnd="0dp">
+
+            <ImageButton
+                android:id="@+id/backButtonSettings"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_gravity="start"
+                android:background="@android:color/transparent"
+                android:contentDescription="Назад"
+                android:onClick="backButton"
+                android:src="@drawable/ic_menu_back_arrow" />
+
+            <TextView
+                android:id="@+id/textDay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="@string/settings_name"
+                android:layout_gravity="center"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:textAppearance="?attr/textAppearanceHeadline6" />
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:id="@+id/textAppSettings"
+        android:layout_marginTop="8dp"
+        android:text="Настройки приложения"
+        app:layout_constraintTop_toBottomOf="@+id/appBarMain" />
+
+    <LinearLayout
+        android:id="@+id/darkModeLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_weight="3"
+        android:clickable="true"
+        android:gravity="center_vertical"
+        android:onClick="darkMode"
+        android:orientation="horizontal"
+        android:padding="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textAppSettings">
+
+        <ImageView
+            android:id="@+id/darkModeImage"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_weight="0.1"
+            android:src="@drawable/ic_dark_mode"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2.8"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@+id/textsDarkModeSettings">
+
+            <TextView
+                android:id="@+id/darkModeName"
+                style="@style/TextAppearance.AppCompat.Body2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/dark_mode_name"
+                app:layout_constraintStart_toEndOf="@id/imageView"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/darkModeDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/dark_mode_description" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/darkModeSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:onClick="darkMode" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/changedFunctionLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="3"
+        android:clickable="true"
+        android:gravity="center_vertical"
+        android:onClick="changedFunction"
+        android:orientation="horizontal"
+        android:padding="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/darkModeLinearLayout">
+
+        <ImageView
+            android:id="@+id/changedFunctionImage"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_weight="0.1"
+            android:src="@drawable/ic_change_circle"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2.8"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@+id/textsDarkModeSettings">
+
+            <TextView
+                android:id="@+id/changedFunctionName"
+                style="@style/TextAppearance.AppCompat.Body2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/changed_function_name"
+                app:layout_constraintStart_toEndOf="@id/imageView"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/companyTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/changed_function_description" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.1"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/changedFunctionSwitch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:onClick="changedFunction" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:id="@+id/textOtherSettings"
+        android:layout_marginTop="8dp"
+        android:text="Другое"
+        app:layout_constraintTop_toBottomOf="@+id/changedFunctionLinearLayout" />
+
+    <LinearLayout
+        android:id="@+id/survey"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_weight="3"
+        android:clickable="true"
+        android:gravity="center_vertical"
+        android:onClick="survey"
+        android:orientation="horizontal"
+        android:padding="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textOtherSettings">
+
+        <ImageView
+            android:id="@+id/surveyImage"
+            android:layout_width="wrap_content"
+            android:layout_height="24dp"
+            android:layout_weight="0.1"
+            android:src="@drawable/ic_checklist"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="2.9"
+            android:orientation="vertical"
+            app:layout_constraintTop_toBottomOf="@+id/textsDarkModeSettings">
+
+            <TextView
+                android:id="@+id/surveyName"
+                style="@style/TextAppearance.AppCompat.Body2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/survey_name"
+                app:layout_constraintStart_toEndOf="@id/imageView"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/surveyDescription"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:layout_marginStart="15dp"
+                android:layout_marginEnd="15dp"
+                android:text="@string/survey_description" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
