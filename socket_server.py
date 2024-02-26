@@ -1,3 +1,5 @@
+#this file is not connected to github, it's just a file that just was uploaded here and will be updating with fixes
+
 import sys
 from socketserver import StreamRequestHandler, TCPServer
 
