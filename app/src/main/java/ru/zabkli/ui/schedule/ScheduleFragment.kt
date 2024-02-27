@@ -1,6 +1,5 @@
 package ru.zabkli.ui.schedule
 
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,14 +7,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ru.zabkli.MainActivity
-import ru.zabkli.databinding.ActivityMainBinding
 import ru.zabkli.databinding.FragmentScheduleBinding
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -79,8 +75,6 @@ class ScheduleFragment : Fragment() {
 
     var week_day: Int = day
 
-    private lateinit var bind: ActivityMainBinding
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -109,7 +103,7 @@ class ScheduleFragment : Fragment() {
         _binding = null
     }
 
-    public fun updater(){
+    fun updater(){
         val settingsZabKLI = activity?.getSharedPreferences(
             SETTINGS_ZABKLI,
             AppCompatActivity.MODE_PRIVATE
@@ -167,8 +161,8 @@ class ScheduleFragment : Fragment() {
         }
         if (currentTime >= intTimeOfLessons[idForTimeOfLessons[week_day-1]][7]){
             MainScope().launch {
-                binding.timeNextLesson.text = firstLessons[week_day % 7][0]
-                binding.textNextLesson.text = firstLessons[week_day % 7][1]
+                binding.timeNextLesson.text = firstLessons[(week_day - 1) % 7][0]
+                binding.textNextLesson.text = firstLessons[(week_day - 1) % 7][1]
             }
             week_day = day + 1
         }
@@ -239,7 +233,6 @@ class ScheduleFragment : Fragment() {
                     val lessonsAllDataString: List<String> = gotString.split("§")
                     val lessonsDataString: List<String> = lessonsAllDataString[0].split("$")
                     val changedLessonsIds: List<String> = lessonsAllDataString[1].split("$")
-                    val changedBoolLessons: ArrayList<Boolean> = ArrayList()
 
                     for (currentDayLessonsId in 0..6) {
                         val changingArray: MutableList<String> = mutableListOf("", "", "", "", "", "", "", "")
