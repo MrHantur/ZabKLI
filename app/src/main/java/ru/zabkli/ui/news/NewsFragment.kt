@@ -1,7 +1,5 @@
 package ru.zabkli.ui.news
 
-import android.R.attr.text
-import android.R.attr.value
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -114,7 +112,13 @@ private var _binding: FragmentNewsBinding? = null
                     binding.textPageNumber.text = showingPageString
                 }
             } catch (excep: ConnectException) {
-                Toast.makeText(activity, "Не удалось получить ответ от сервера. ConnectionError", Toast.LENGTH_LONG).show()
+                activity?.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Не удалось получить ответ от сервера",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }

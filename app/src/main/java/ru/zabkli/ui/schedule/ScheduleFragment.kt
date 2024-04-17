@@ -249,10 +249,22 @@ class ScheduleFragment : Fragment() {
                     DayCycle()
                     NextLesson()
                 } else {
-                    Toast.makeText(activity, "Получен пустой ответ. ZeroAnswerError", Toast.LENGTH_LONG).show()
+                    activity?.runOnUiThread {
+                        Toast.makeText(
+                            activity,
+                            "Получен пустой ответ от сервера",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             } catch (excep: ConnectException) {
-                Toast.makeText(activity, "Не удалось получить ответ от сервера. ConnectionError", Toast.LENGTH_LONG).show()
+                activity?.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Не удалось получить ответ от сервера",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }

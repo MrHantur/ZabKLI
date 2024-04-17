@@ -109,7 +109,7 @@
                             android:id="@+id/textNextLesson"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/loading_lesson_name"
+                            android:text="@string/disable_changed_function"
                             android:textAppearance="?attr/textAppearanceHeadline6" />
 
                         <TextView

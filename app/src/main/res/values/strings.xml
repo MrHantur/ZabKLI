@@ -32,4 +32,7 @@
     <string name="loading_lesson_name">Загрузка уроков…</string>
     <string name="loading_lesson_time">Загрузка времени уроков…</string>
     <string name="loading_day">Загрузка дня…</string>
+    <string name="disable_changed_function">Похоже, что загрузка довольно долгая. Если вы хотите,
+        чтобы использовалось расписание, заданное в приложение заранее, то отключите в настройках
+        функцию отображения изменённых уроков</string>
 </resources>
