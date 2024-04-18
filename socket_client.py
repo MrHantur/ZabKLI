@@ -10,14 +10,14 @@ import socket
 
 host = "185.177.216.236"
 #host = "localhost"
-port = 20
+port = 1717
 #data = "1$9b$1$1$Разговор о важном$1$"
 #data = "3$"
 #data = "4$get$"
 #data = "5$2$"
 #data = "0$"
-#data = input()
-data = "2$11b"
+data = input()
+#data = "2$11b"
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
     # Connect to server and send data
