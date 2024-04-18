@@ -27,6 +27,10 @@
     <string name="survey_name">Анкетирование</string>
     <string name="survey_description">Пройдите опрос для улучшения приложения</string>
 
+    <string name="edit_schedule_name">Внести изменение в расписание</string>
+    <string name="edit_schedule_description">Нажмите, чтобы внести изменение в расписание самостоятельно
+        (при отправке сохраняются некоторые данные о вас, чтобы можно было понятно кто вы)</string>
+
     <string name="ui_next_lesson_text">Следующий урок:</string>
     <string name="ui_text_schedule">Расписание</string>
     <string name="loading_lesson_name">Загрузка уроков…</string>

@@ -221,7 +221,7 @@ class ScheduleFragment : Fragment() {
     suspend fun getLessons(userUsingClassString: String) {
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 20)
+                val client = Socket("185.177.216.236", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
@@ -238,7 +238,7 @@ class ScheduleFragment : Fragment() {
                         val changingArray: MutableList<String> = mutableListOf("", "", "", "", "", "", "", "")
                         for (currentLessonOnDayId in 0..7) {
                             if (changedLessonsIds[currentDayLessonsId * 8 + currentLessonOnDayId] == "1") {
-                                changingArray[currentLessonOnDayId] = "(ИЗМЕНЕНО)" + lessonsDataString[currentDayLessonsId * 8 + currentLessonOnDayId]
+                                changingArray[currentLessonOnDayId] = "(ИЗМЕНЕНИЕ) " + lessonsDataString[currentDayLessonsId * 8 + currentLessonOnDayId]
                             } else {
                                 changingArray[currentLessonOnDayId] = lessonsDataString[currentDayLessonsId * 8 + currentLessonOnDayId]
                             }

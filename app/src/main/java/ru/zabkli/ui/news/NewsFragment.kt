@@ -60,7 +60,7 @@ private var _binding: FragmentNewsBinding? = null
     }
 
     fun backButton(){
-        if (page-1<0){
+        if (page<1){
             page = 1
         }
         page -= 1
@@ -81,7 +81,7 @@ private var _binding: FragmentNewsBinding? = null
     suspend fun getNews(page: Int){
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 20)
+                val client = Socket("185.177.216.236", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
