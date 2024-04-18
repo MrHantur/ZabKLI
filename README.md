@@ -4,5 +4,6 @@ Mobile Application Kotlin Code - https://github.com/MrHantur/ZabKLI/tree/master/
 
 Mobile Application Layout Code - https://github.com/MrHantur/ZabKLI/tree/master/app/src/main/res/layout
 
+---------------------
 
-Download App Link - https://drive.google.com/uc?export=download&id=1XK5ncrSQbRqdreW2IRVVKc_Kqh0MDNGm
+Download App Link - https://mrhantur.ru/wp-content/uploads/2024/04/zabkli.apk
