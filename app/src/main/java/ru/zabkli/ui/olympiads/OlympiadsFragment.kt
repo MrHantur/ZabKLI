@@ -4,20 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.zabkli.databinding.FragmentOlympiadsBinding
-import ru.zabkli.ui.news.NewsData
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -48,8 +44,6 @@ class OlympiadsFragment : Fragment() {
             getOlympiad()
         }
 
-        println("Olympiads Fragment")
-
         return root
     }
 
@@ -61,7 +55,7 @@ class OlympiadsFragment : Fragment() {
     suspend fun getOlympiad() {
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 20)
+                val client = Socket("185.177.216.236", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
@@ -107,7 +101,13 @@ class OlympiadsFragment : Fragment() {
                     recyclerView.adapter = OlympiadsData(weekOlympiadsNames, weekOlympiadsDescription)
                 }
             } catch (excep: ConnectException) {
-                Toast.makeText(activity, "Не удалось получить ответ от сервера. ConnectionError", Toast.LENGTH_LONG).show()
+                activity?.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Не удалось получить ответ от сервера",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }

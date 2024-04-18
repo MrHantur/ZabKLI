@@ -3,11 +3,9 @@ package ru.zabkli
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.SharedPreferences.Editor
 import android.os.Bundle
 import android.view.View
 import android.widget.RatingBar
-import android.widget.Switch
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -16,8 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.io.PrintWriter
 import java.net.ConnectException
 import java.net.Socket
@@ -118,7 +114,7 @@ class SettingsActivity : AppCompatActivity() {
         } else {
             Toast.makeText(applicationContext, "Анкетирование пройдено!", Toast.LENGTH_SHORT).show()
             if (!isSurveyDataSent){
-                var surveyResults: String = "4$"
+                var surveyResults = "4$"
                 surveyResults = surveyResults +
                         answersInSurvey[0].toString() + "$" +
                         answersInSurvey[1].toString() + "$" +
@@ -134,13 +130,13 @@ class SettingsActivity : AppCompatActivity() {
     suspend fun sendSurveyData(surveyResults: String){
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 20)
+                val client = Socket("185.177.216.236", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
 
                 output.println(surveyResults)
             } catch (excep: ConnectException) {
                 runOnUiThread {
-                    Toast.makeText(applicationContext, "Не удалось получить ответ от сервера. ConnectionError", Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, "Не удалось получить ответ от сервера", Toast.LENGTH_LONG).show()
                 }
             }
         }

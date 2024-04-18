@@ -1,7 +1,5 @@
 package ru.zabkli.ui.news
 
-import android.R.attr.text
-import android.R.attr.value
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -62,7 +60,7 @@ private var _binding: FragmentNewsBinding? = null
     }
 
     fun backButton(){
-        if (page-1<0){
+        if (page<1){
             page = 1
         }
         page -= 1
@@ -83,7 +81,7 @@ private var _binding: FragmentNewsBinding? = null
     suspend fun getNews(page: Int){
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 20)
+                val client = Socket("185.177.216.236", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
@@ -114,7 +112,13 @@ private var _binding: FragmentNewsBinding? = null
                     binding.textPageNumber.text = showingPageString
                 }
             } catch (excep: ConnectException) {
-                Toast.makeText(activity, "Не удалось получить ответ от сервера. ConnectionError", Toast.LENGTH_LONG).show()
+                activity?.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        "Не удалось получить ответ от сервера",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }
