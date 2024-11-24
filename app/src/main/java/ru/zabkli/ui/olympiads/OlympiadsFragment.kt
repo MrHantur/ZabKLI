@@ -55,7 +55,7 @@ class OlympiadsFragment : Fragment() {
     suspend fun getOlympiad() {
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 1717)
+                val client = Socket("212.67.12.199", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 

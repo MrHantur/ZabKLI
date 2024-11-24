@@ -9,7 +9,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.zabkli.databinding.FragmentScheduleBinding
@@ -20,17 +19,12 @@ import java.net.ConnectException
 import java.net.Socket
 import java.util.Calendar
 
-
 class ScheduleFragment : Fragment() {
 
     private var _binding: FragmentScheduleBinding? = null
-
-    private val SETTINGS_ZABKLI = "settings_zabkli"
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
+    private val SETTINGS_ZABKLI = "settings_zabkli"
     var calendar = Calendar.getInstance()
     var day = calendar[Calendar.DAY_OF_WEEK]
     var currentTime = calendar[Calendar.HOUR_OF_DAY] * 60 + calendar[Calendar.MINUTE]
@@ -85,12 +79,12 @@ class ScheduleFragment : Fragment() {
 
         updater()
 
-        _binding!!.backButton.setOnClickListener{
+        binding.backButton.setOnClickListener {
             week_day--
             DayCycle()
         }
 
-        _binding!!.forwardButton.setOnClickListener{
+        binding.forwardButton.setOnClickListener {
             week_day++
             DayCycle()
         }
@@ -103,7 +97,7 @@ class ScheduleFragment : Fragment() {
         _binding = null
     }
 
-    fun updater(){
+    fun updater() {
         val settingsZabKLI = activity?.getSharedPreferences(
             SETTINGS_ZABKLI,
             AppCompatActivity.MODE_PRIVATE
@@ -116,9 +110,7 @@ class ScheduleFragment : Fragment() {
             lifecycleScope.launch {
                 getLessons(listIdsForClassChange[whatClassUserUse!!])
             }
-        }
-
-        else {
+        } else {
             val lessonsDataString: List<String> = allLessonsDefault[whatClassUserUse!!].split("$")
 
             for (currentDayLessonsId in 0..6) {
@@ -132,12 +124,11 @@ class ScheduleFragment : Fragment() {
             }
 
             NextLesson()
-
             DayCycle()
         }
     }
 
-    fun NextLesson(){
+    fun NextLesson() {
         val firstLessons = listOf(
             listOf("8:00-8:50", lessons[0][0]),
             listOf("8:00-8:50", lessons[1][0]),
@@ -148,10 +139,10 @@ class ScheduleFragment : Fragment() {
             listOf("8:00-8:40", lessons[6][0])
         )
 
-        val idForTimeOfLessons = listOf<Int>(0,0,1,1,2,1,2)
-        for (potentialNextLessonId in 0..7){
-            if (currentTime < intTimeOfLessons[idForTimeOfLessons[week_day-1]][potentialNextLessonId]){
-                MainScope().launch {
+        val idForTimeOfLessons = listOf<Int>(0, 0, 1, 1, 2, 1, 2)
+        for (potentialNextLessonId in 0..7) {
+            if (currentTime < intTimeOfLessons[idForTimeOfLessons[week_day - 1]][potentialNextLessonId]) {
+                lifecycleScope.launch {
                     binding.textNextLesson.text = lessons[week_day - 1][potentialNextLessonId]
                     binding.timeNextLesson.text =
                         timeOfLessons[idForTimeOfLessons[week_day - 1]][potentialNextLessonId]
@@ -159,8 +150,8 @@ class ScheduleFragment : Fragment() {
                 break
             }
         }
-        if (currentTime >= intTimeOfLessons[idForTimeOfLessons[week_day-1]][7]){
-            MainScope().launch {
+        if (currentTime >= intTimeOfLessons[idForTimeOfLessons[week_day - 1]][7]) {
+            lifecycleScope.launch {
                 binding.timeNextLesson.text = firstLessons[(week_day - 1) % 7][0]
                 binding.textNextLesson.text = firstLessons[(week_day - 1) % 7][1]
             }
@@ -168,14 +159,14 @@ class ScheduleFragment : Fragment() {
         }
     }
 
-    fun DayCycle(){
-        if (week_day<2){
-            week_day = 7
-        } else if (week_day>7) {
-            week_day = 2
-        }
+    fun DayCycle() {
+        lifecycleScope.launch {
+            if (week_day < 2) {
+                week_day = 7
+            } else if (week_day > 7) {
+                week_day = 2
+            }
 
-        MainScope().launch {
             binding.textDay.text = textVerWeekDay[week_day - 1]
 
             binding.textLesson1.text = lessons[week_day - 1][0]
@@ -221,7 +212,7 @@ class ScheduleFragment : Fragment() {
     suspend fun getLessons(userUsingClassString: String) {
         return withContext(Dispatchers.IO) {
             try {
-                val client = Socket("185.177.216.236", 1717)
+                val client = Socket("212.67.12.199", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
@@ -229,7 +220,7 @@ class ScheduleFragment : Fragment() {
                 val gotString = input.readLine()
                 client.close()
 
-                if (gotString!=""){
+                if (gotString != "") {
                     val lessonsAllDataString: List<String> = gotString.split("§")
                     val lessonsDataString: List<String> = lessonsAllDataString[0].split("$")
                     val changedLessonsIds: List<String> = lessonsAllDataString[1].split("$")
@@ -269,4 +260,3 @@ class ScheduleFragment : Fragment() {
         }
     }
 }
-
