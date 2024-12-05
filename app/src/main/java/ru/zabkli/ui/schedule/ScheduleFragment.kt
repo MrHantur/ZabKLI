@@ -169,43 +169,30 @@ class ScheduleFragment : Fragment() {
 
             binding.textDay.text = textVerWeekDay[week_day - 1]
 
-            binding.textLesson1.text = lessons[week_day - 1][0]
-            binding.textLesson2.text = lessons[week_day - 1][1]
-            binding.textLesson3.text = lessons[week_day - 1][2]
-            binding.textLesson4.text = lessons[week_day - 1][3]
-            binding.textLesson5.text = lessons[week_day - 1][4]
-            binding.textLesson6.text = lessons[week_day - 1][5]
-            binding.textLesson7.text = lessons[week_day - 1][6]
-            binding.textLesson8.text = lessons[week_day - 1][7]
-
-            if ((week_day == 2) or (week_day == 1)) {
-                binding.timeLesson1.text = timeOfLessons[0][0]
-                binding.timeLesson2.text = timeOfLessons[0][1]
-                binding.timeLesson3.text = timeOfLessons[0][2]
-                binding.timeLesson4.text = timeOfLessons[0][3]
-                binding.timeLesson5.text = timeOfLessons[0][4]
-                binding.timeLesson6.text = timeOfLessons[0][5]
-                binding.timeLesson7.text = timeOfLessons[0][6]
-                binding.timeLesson8.text = timeOfLessons[0][7]
-            } else if ((week_day == 7) or (week_day == 5)) {
-                binding.timeLesson1.text = timeOfLessons[2][0]
-                binding.timeLesson2.text = timeOfLessons[2][1]
-                binding.timeLesson3.text = timeOfLessons[2][2]
-                binding.timeLesson4.text = timeOfLessons[2][3]
-                binding.timeLesson5.text = timeOfLessons[2][4]
-                binding.timeLesson6.text = timeOfLessons[2][5]
-                binding.timeLesson7.text = timeOfLessons[2][6]
-                binding.timeLesson8.text = timeOfLessons[2][7]
-            } else {
-                binding.timeLesson1.text = timeOfLessons[1][0]
-                binding.timeLesson2.text = timeOfLessons[1][1]
-                binding.timeLesson3.text = timeOfLessons[1][2]
-                binding.timeLesson4.text = timeOfLessons[1][3]
-                binding.timeLesson5.text = timeOfLessons[1][4]
-                binding.timeLesson6.text = timeOfLessons[1][5]
-                binding.timeLesson7.text = timeOfLessons[1][6]
-                binding.timeLesson8.text = timeOfLessons[1][7]
+            val lessonsForDay = lessons[week_day - 1]
+            val timesForDay = when (week_day) {
+                2, 1 -> timeOfLessons[0]
+                7, 5 -> timeOfLessons[2]
+                else -> timeOfLessons[1]
             }
+
+            binding.textLesson1.text = lessonsForDay[0]
+            binding.textLesson2.text = lessonsForDay[1]
+            binding.textLesson3.text = lessonsForDay[2]
+            binding.textLesson4.text = lessonsForDay[3]
+            binding.textLesson5.text = lessonsForDay[4]
+            binding.textLesson6.text = lessonsForDay[5]
+            binding.textLesson7.text = lessonsForDay[6]
+            binding.textLesson8.text = lessonsForDay[7]
+
+            binding.timeLesson1.text = timesForDay[0]
+            binding.timeLesson2.text = timesForDay[1]
+            binding.timeLesson3.text = timesForDay[2]
+            binding.timeLesson4.text = timesForDay[3]
+            binding.timeLesson5.text = timesForDay[4]
+            binding.timeLesson6.text = timesForDay[5]
+            binding.timeLesson7.text = timesForDay[6]
+            binding.timeLesson8.text = timesForDay[7]
         }
     }
 
