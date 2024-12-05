@@ -139,25 +139,24 @@ class ScheduleFragment : Fragment() {
             listOf("8:00-8:40", lessons[6][0])
         )
 
-        val idForTimeOfLessons = listOf<Int>(0, 0, 1, 1, 2, 1, 2)
-        for (potentialNextLessonId in 0..7) {
-            if (currentTime < intTimeOfLessons[idForTimeOfLessons[week_day - 1]][potentialNextLessonId]) {
-                lifecycleScope.launch {
-                    binding.textNextLesson.text = lessons[week_day - 1][potentialNextLessonId]
-                    binding.timeNextLesson.text =
-                        timeOfLessons[idForTimeOfLessons[week_day - 1]][potentialNextLessonId]
-                }
+        val idForTimeOfLessons = listOf(0, 0, 1, 1, 2, 1, 2)
+        val timeIndex = idForTimeOfLessons[week_day - 1]
+
+        for (potentialNextLessonId in 0 until intTimeOfLessons[timeIndex].size) {
+            if (currentTime < intTimeOfLessons[timeIndex][potentialNextLessonId]) {
+                binding.textNextLesson.text = lessons[week_day - 1][potentialNextLessonId]
+                binding.timeNextLesson.text = timeOfLessons[timeIndex][potentialNextLessonId]
                 break
             }
         }
-        if (currentTime >= intTimeOfLessons[idForTimeOfLessons[week_day - 1]][7]) {
-            lifecycleScope.launch {
-                binding.timeNextLesson.text = firstLessons[(week_day - 1) % 7][0]
-                binding.textNextLesson.text = firstLessons[(week_day - 1) % 7][1]
-            }
+
+        if (currentTime >= intTimeOfLessons[timeIndex][7]) {
+            binding.timeNextLesson.text = firstLessons[(week_day - 1) % 7][0]
+            binding.textNextLesson.text = firstLessons[(week_day - 1) % 7][1]
             week_day = day + 1
         }
     }
+
 
     fun DayCycle() {
         lifecycleScope.launch {
