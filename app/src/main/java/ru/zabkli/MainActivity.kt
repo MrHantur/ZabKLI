@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
-    val listItemsForClassChange = arrayOf("5", "6", "7", "8", "9 А", "9 Б", "10 А", "10 Б", "11 А", "11 Б")
+    private val listItemsForClassChange = arrayOf("5", "6", "7", "8", "9 А", "9 Б", "10 А", "10 Б", "11 А", "11 Б")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val settingsZabKLI = getSharedPreferences(
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.appBarMain.textClass.text = listItemsForClassChange[whatClassUserUse]
 
-        getSupportActionBar()?.setDisplayShowTitleEnabled(false)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
     }
 
     fun settingsButton(view: View){
@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity() {
             finish()
             startActivity(Intent(this, MainActivity::class.java))
         }
-        mBuilder.setNeutralButton("Закрыть") { dialog, which ->
+        mBuilder.setNeutralButton("Закрыть") { dialog, _ ->
             dialog.cancel()
         }
 

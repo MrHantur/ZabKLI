@@ -151,8 +151,10 @@ class ScheduleFragment : Fragment() {
         }
 
         if (currentTime >= intTimeOfLessons[timeIndex][7]) {
-            binding.timeNextLesson.text = firstLessons[(weekDay - 1) % 7][0]
-            binding.textNextLesson.text = firstLessons[(weekDay - 1) % 7][1]
+            lifecycleScope.launch {
+                binding.timeNextLesson.text = firstLessons[(weekDay - 1) % 7][0]
+                binding.textNextLesson.text = firstLessons[(weekDay - 1) % 7][1]
+            }
             weekDay = day + 1
         }
     }

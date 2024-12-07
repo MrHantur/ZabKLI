@@ -1,7 +1,6 @@
 package ru.zabkli
 
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -22,11 +21,11 @@ import java.net.Socket
 class SettingsActivity : AppCompatActivity() {
     private val SETTINGS_ZABKLI = "settings_zabkli"
 
-    var currentIdOfQuestionInSurvey = 0
-    val answersInSurvey = ArrayList<Int>()
-    var isSurveyDataSent: Boolean = false
-    var isChangedFunction: Boolean = false
-    var isDarkMode: Boolean = false
+    private var currentIdOfQuestionInSurvey = 0
+    private val answersInSurvey = ArrayList<Int>()
+    private var isSurveyDataSent: Boolean = false
+    private var isChangedFunction: Boolean = false
+    private var isDarkMode: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +42,7 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<SwitchCompat>(R.id.changedFunctionSwitch).setChecked(isChangedFunction)
         findViewById<SwitchCompat>(R.id.darkModeSwitch).setChecked(isDarkMode)
 
-        getSupportActionBar()?.hide()
+        supportActionBar?.hide()
     }
 
     fun backButton(view: View){
@@ -80,7 +79,7 @@ class SettingsActivity : AppCompatActivity() {
 
     fun survey(view: View) {
         if ((currentIdOfQuestionInSurvey < 3) and (!isSurveyDataSent)) {
-            val questions = listOf<String>(
+            val questions = listOf(
                 "Как Вы оцените дизайн приложения?",
                 "Как Вы оцените функционал приложения?",
                 "Как Вы оцените удовлетворённость приложением в целом?"
@@ -95,19 +94,23 @@ class SettingsActivity : AppCompatActivity() {
 
             val rating = linearlayout.findViewById<View>(R.id.ratingbar) as RatingBar
 
-            ratingdialog.setPositiveButton("Готово",
-                DialogInterface.OnClickListener { dialog, which ->
-                    if (rating.rating.toInt()!=0) {
-                        answersInSurvey.add(rating.rating.toInt())
-                        currentIdOfQuestionInSurvey += 1
-                        dialog.dismiss()
-                        survey(view)
-                    } else {
-                        Toast.makeText(applicationContext, "Нажмите на звёздочку, чтобы дать оценку!", Toast.LENGTH_SHORT).show()
-                    }
-                })
-                .setNegativeButton("Выйти",
-                    DialogInterface.OnClickListener { dialog, id -> dialog.cancel() })
+            ratingdialog.setPositiveButton("Готово"
+            ) { dialog, _ ->
+                if (rating.rating.toInt() != 0) {
+                    answersInSurvey.add(rating.rating.toInt())
+                    currentIdOfQuestionInSurvey += 1
+                    dialog.dismiss()
+                    survey(view)
+                } else {
+                    Toast.makeText(
+                        applicationContext,
+                        "Нажмите на звёздочку, чтобы дать оценку!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+                .setNegativeButton("Выйти"
+                ) { dialog, _ -> dialog.cancel() }
 
             ratingdialog.create()
             ratingdialog.show()
@@ -127,7 +130,7 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-    suspend fun sendSurveyData(surveyResults: String){
+    private suspend fun sendSurveyData(surveyResults: String){
         return withContext(Dispatchers.IO) {
             try {
                 val client = Socket("185.177.216.236", 1717)
