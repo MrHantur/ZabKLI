@@ -28,8 +28,6 @@ class OlympiadsFragment : Fragment() {
     val dynamicOlympiadsDescription: ArrayList<String> = ArrayList()
 
     private var _binding: FragmentOlympiadsBinding? = null
-  // This property is only valid between onCreateView and
-  // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
