@@ -177,23 +177,13 @@ class ScheduleFragment : Fragment() {
                 else -> timeOfLessons[1]
             }
 
-            binding.textLesson1.text = lessonsForDay[0]
-            binding.textLesson2.text = lessonsForDay[1]
-            binding.textLesson3.text = lessonsForDay[2]
-            binding.textLesson4.text = lessonsForDay[3]
-            binding.textLesson5.text = lessonsForDay[4]
-            binding.textLesson6.text = lessonsForDay[5]
-            binding.textLesson7.text = lessonsForDay[6]
-            binding.textLesson8.text = lessonsForDay[7]
+            val textLessons = arrayOf(binding.textLesson1, binding.textLesson2, binding.textLesson3, binding.textLesson4, binding.textLesson5, binding.textLesson6, binding.textLesson7, binding.textLesson8)
+            val timeLessons = arrayOf(binding.timeLesson1, binding.timeLesson2, binding.timeLesson3, binding.timeLesson4, binding.timeLesson5, binding.timeLesson6, binding.timeLesson7, binding.timeLesson8)
 
-            binding.timeLesson1.text = timesForDay[0]
-            binding.timeLesson2.text = timesForDay[1]
-            binding.timeLesson3.text = timesForDay[2]
-            binding.timeLesson4.text = timesForDay[3]
-            binding.timeLesson5.text = timesForDay[4]
-            binding.timeLesson6.text = timesForDay[5]
-            binding.timeLesson7.text = timesForDay[6]
-            binding.timeLesson8.text = timesForDay[7]
+            for (i in 0 until 8) {
+                textLessons[i].text = lessonsForDay[i]
+                timeLessons[i].text = timesForDay[i]
+            }
         }
     }
 
