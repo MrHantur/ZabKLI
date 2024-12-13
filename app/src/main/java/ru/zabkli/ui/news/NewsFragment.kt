@@ -25,10 +25,10 @@ class NewsFragment : Fragment() {
 
 private var _binding: FragmentNewsBinding? = null
 
-    var newsTitles: List<String> = listOf()
-    var newsDescriptions: List<String> = listOf()
-    var newsSources: List<String> = listOf()
-    var page = 0
+    private var newsTitles: List<String> = listOf()
+    private var newsDescriptions: List<String> = listOf()
+    private var newsSources: List<String> = listOf()
+    private var page = 0
 
     private val binding get() = _binding!!
 
@@ -44,12 +44,12 @@ private var _binding: FragmentNewsBinding? = null
             getNews(page)
         }
 
-        binding.backButtonNews.setOnClickListener(View.OnClickListener {
+        binding.backButtonNews.setOnClickListener {
             backButton()
-        })
-        binding.forwardButtonNews.setOnClickListener(View.OnClickListener {
+        }
+        binding.forwardButtonNews.setOnClickListener {
             forwardButton()
-        })
+        }
 
         return root
     }
@@ -59,7 +59,7 @@ private var _binding: FragmentNewsBinding? = null
         _binding = null
     }
 
-    fun backButton(){
+    private fun backButton(){
         if (page<1){
             page = 1
         }
@@ -71,21 +71,21 @@ private var _binding: FragmentNewsBinding? = null
         Thread.sleep(100)
     }
 
-    fun forwardButton(){
+    private fun forwardButton(){
         page += 1
         lifecycleScope.launch {
             getNews(page)
         }
     }
 
-    suspend fun getNews(page: Int){
+    private suspend fun getNews(page: Int){
         return withContext(Dispatchers.IO) {
             try {
                 val client = Socket("212.67.12.199", 1717)
                 val output = PrintWriter(client.getOutputStream(), true)
                 val input = BufferedReader(InputStreamReader(client.inputStream))
 
-                output.println("5$"+page.toString()+"$")
+                output.println("5$$page$")
                 val gotString = input.readLine()
                 client.close()
 
@@ -98,7 +98,7 @@ private var _binding: FragmentNewsBinding? = null
                 newsDescriptions = gotDataNews[2].split("$")
 
                 val recyclerView: RecyclerView = binding.recyclerViewNews
-                var showingPageString = ""
+                val showingPageString: String
                 if (page>realPage){
                     showingPageString = (realPage+1).toString() + "-я страница"
                     this@NewsFragment.page = realPage
