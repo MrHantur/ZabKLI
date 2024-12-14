@@ -15,8 +15,8 @@
     <string name="title_news">Новости</string>
     <string name="title_schedule">Расписание</string>
 
-    <string name="back_desciption">Назад</string>
-    <string name="forward_desciption">Вперёд</string>
+    <string name="back_description">Назад</string>
+    <string name="forward_description">Вперёд</string>
 
     <string name="settings_name">Настройки</string>
     <string name="dark_mode_name">Включить тёмную тему</string>

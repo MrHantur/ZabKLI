@@ -35,7 +35,7 @@
                 android:layout_height="56dp"
                 android:layout_gravity="start"
                 android:background="@android:color/transparent"
-                android:contentDescription="Назад"
+                android:contentDescription="@string/back_description"
                 android:onClick="backButton"
                 android:src="@drawable/ic_menu_back_arrow" />
 
@@ -79,6 +79,7 @@
         android:layout_marginTop="8dp"
         android:layout_weight="3"
         android:clickable="true"
+        android:focusable="true"
         android:gravity="center_vertical"
         android:onClick="darkMode"
         android:orientation="horizontal"
