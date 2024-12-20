@@ -6,4 +6,4 @@ Mobile Application Layout Code - https://github.com/MrHantur/ZabKLI/tree/master/
 
 ---------------------
 
-Download App Link - https://mrhantur.ru/wp-content/uploads/2024/12/zabkli.apk
+Download App Link - https://mrhantur.ru/wp-content/uploads/2024/12/zabkli-1.apk
