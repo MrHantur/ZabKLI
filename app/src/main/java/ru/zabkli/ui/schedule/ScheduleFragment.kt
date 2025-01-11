@@ -144,8 +144,10 @@ class ScheduleFragment : Fragment() {
 
         for (potentialNextLessonId in 0 until intTimeOfLessons[timeIndex].size) {
             if (currentTime < intTimeOfLessons[timeIndex][potentialNextLessonId]) {
-                binding.textNextLesson.text = lessons[weekDay - 1][potentialNextLessonId]
-                binding.timeNextLesson.text = timeOfLessons[timeIndex][potentialNextLessonId]
+                lifecycleScope.launch {
+                    binding.textNextLesson.text = lessons[weekDay - 1][potentialNextLessonId]
+                    binding.timeNextLesson.text = timeOfLessons[timeIndex][potentialNextLessonId]
+                }
                 break
             }
         }
