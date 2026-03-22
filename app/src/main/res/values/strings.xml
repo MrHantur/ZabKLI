@@ -7,10 +7,6 @@
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Настройки</string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
-
     <string name="title_olympiads">Олимпиады</string>
     <string name="title_news">Новости</string>
     <string name="title_schedule">Расписание</string>
@@ -40,5 +36,7 @@
         чтобы использовалось расписание, заданное в приложение заранее, то отключите в настройках
         функцию отображения изменённых уроков</string>
 
-    <string name="ui_news_page_text">… страница</string>
+    <string name="error_no_internet">Похоже, что у вас нет доступа к интернету</string>
+    <string name="error_unknown">Ой… произошла ошибка</string>
+    <string name="error_work_in_progress">Пока что мы ведём работы над этой частью</string>
 </resources>

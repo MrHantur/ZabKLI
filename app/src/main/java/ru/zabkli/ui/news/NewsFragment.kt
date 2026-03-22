@@ -1,124 +1,113 @@
 package ru.zabkli.ui.news
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.webkit.ConsoleMessage
+import android.webkit.SslErrorHandler
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.ImageView
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import ru.zabkli.databinding.FragmentNewsBinding
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.PrintWriter
-import java.net.ConnectException
-import java.net.Socket
-
+import ru.zabkli.R
+import java.io.ByteArrayInputStream
 
 class NewsFragment : Fragment() {
-
-private var _binding: FragmentNewsBinding? = null
-
-    private var newsTitles: List<String> = listOf()
-    private var newsDescriptions: List<String> = listOf()
-    private var newsSources: List<String> = listOf()
-    private var page = 0
-
-    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentNewsBinding.inflate(inflater, container, false)
-        val root: View = binding.root
+    ): View? = inflater.inflate(R.layout.fragment_news, container, false)
 
-        lifecycleScope.launch {
-            getNews(page)
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        binding.backButtonNews.setOnClickListener {
-            backButton()
-        }
-        binding.forwardButtonNews.setOnClickListener {
-            forwardButton()
-        }
+        val webView = view.findViewById<WebView>(R.id.webview)
+        val noInternetError = view.findViewById<LinearLayout>(R.id.error_message)
 
-        return root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
-
-    private fun backButton(){
-        if (page<1){
-            page = 1
-        }
-        page -= 1
-        lifecycleScope.launch {
-            getNews(page)
-        }
-
-        Thread.sleep(100)
-    }
-
-    private fun forwardButton(){
-        page += 1
-        lifecycleScope.launch {
-            getNews(page)
+        if (networkState()) {
+            noInternetError.visibility = View.GONE
+            webView.visibility = View.VISIBLE
+            createWebView(webView)
+            // Открываем сайт с новостями
+            webView.loadUrl("https://zabkli.gosuslugi.ru/roditelyam-i-uchenikam/novosti/")
+        } else {
+            webView.visibility = View.GONE
+            noInternetError.visibility = View.VISIBLE
         }
     }
 
-    private suspend fun getNews(page: Int){
-        return withContext(Dispatchers.IO) {
-            try {
-                val client = Socket("212.67.12.199", 1717)
-                val output = PrintWriter(client.getOutputStream(), true)
-                val input = BufferedReader(InputStreamReader(client.inputStream))
+    private fun networkState(): Boolean {
+        val connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork
+        val capabilities = connectivityManager.getNetworkCapabilities(network)
+        return capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET))
+    }
 
-                output.println("5$$page$")
-                val gotString = input.readLine()
-                client.close()
+    private fun createWebView(webView: WebView) {
+        // Чтобы всё нормально и быстро грузилось
+        with(webView.settings) {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            cacheMode = WebSettings.LOAD_DEFAULT
 
-                val gotDataNews: MutableList<String> = gotString.split("§").toMutableList()
-                val realPage: Int = gotDataNews[0].toInt()
-                newsTitles = gotDataNews[1].split("$")
-                newsSources = gotDataNews[3].split("$")
+            offscreenPreRaster = true
+            mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
 
-                gotDataNews[2] = gotDataNews[2].replace("\\-", "\n")
-                newsDescriptions = gotDataNews[2].split("$")
+            // сперва блокируем изображения, чтобы ускорить показ основного контента
+            loadsImagesAutomatically = false
+            useWideViewPort = true
+        }
 
-                val recyclerView: RecyclerView = binding.recyclerViewNews
-                val showingPageString: String
-                if (page>realPage){
-                    showingPageString = (realPage+1).toString() + "-я страница"
-                    this@NewsFragment.page = realPage
-                } else {
-                    showingPageString = (page + 1).toString() + "-я страница"
+        // Аппаратный рендер
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+
+        // Подавляем/обрабатываем консольные сообщения (уберём шум в логах)
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                if (consoleMessage == null) return true
+                // Непустые ошибки логируем
+                return when (consoleMessage.messageLevel()) {
+                    ConsoleMessage.MessageLevel.ERROR -> {
+                        Log.e(
+                            "WebViewConsole",
+                            "${consoleMessage.message()} -- ${consoleMessage.sourceId()}:${consoleMessage.lineNumber()}"
+                        )
+                        true
+                    }
+                    else -> true
                 }
+            }
+        }
 
-                MainScope().launch {
-                    recyclerView.layoutManager = LinearLayoutManager(context)
-                    recyclerView.adapter = NewsData(newsTitles, newsDescriptions, newsSources)
-                    binding.textPageNumber.text = showingPageString
-                }
-            } catch (excep: ConnectException) {
-                activity?.runOnUiThread {
-                    Toast.makeText(
-                        activity,
-                        "Не удалось получить ответ от сервера",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+        // Кастомный WebViewClient: включение изображений после загрузки
+        webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Включаем загрузку изображений после того, как основной HTML/JS отработал
+                view?.settings?.loadsImagesAutomatically = true
+            }
+
+            override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                // По умолчанию — отменяем загрузку при ошибке
+                handler?.cancel()
             }
         }
     }
