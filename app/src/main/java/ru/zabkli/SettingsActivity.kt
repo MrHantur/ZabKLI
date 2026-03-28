@@ -218,23 +218,23 @@ class SettingsActivity : AppCompatActivity() {
     fun updateUserView(type: UserType, avatar: ImageView, roleText: TextView) {
         when (type) {
             UserType.UNKNOWN -> {
-                avatar.setImageResource(R.drawable.ic_unknown_user)
+                avatar.setImageResource(R.drawable.profile_unknown_user)
                 avatar.background = ContextCompat.getDrawable(avatar.context, R.drawable.circle_user_unknown)
             }
             UserType.CONTRIBUTOR -> {
-                avatar.setImageResource(R.drawable.ic_contributor_user)
+                avatar.setImageResource(R.drawable.profile_contributor_user)
                 avatar.background = ContextCompat.getDrawable(avatar.context, R.drawable.circle_user_contributor)
             }
             UserType.EDITOR -> {
-                avatar.setImageResource(R.drawable.ic_editor_user)
+                avatar.setImageResource(R.drawable.profile_editor_user)
                 avatar.background = ContextCompat.getDrawable(avatar.context, R.drawable.circle_user_editor)
             }
             UserType.ADMIN -> {
-                avatar.setImageResource(R.drawable.ic_admin_user)
+                avatar.setImageResource(R.drawable.profile_admin_user)
                 avatar.background = ContextCompat.getDrawable(avatar.context, R.drawable.circle_user_admin)
             }
             UserType.VIEWER -> {
-                avatar.setImageResource(R.drawable.ic_viewer_user)
+                avatar.setImageResource(R.drawable.profile_viewer_user)
                 avatar.background = ContextCompat.getDrawable(avatar.context, R.drawable.circle_user_viewer)
             }
         }

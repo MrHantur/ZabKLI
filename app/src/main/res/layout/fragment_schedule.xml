@@ -8,6 +8,8 @@
     android:tag="schedule_fragment"
     tools:context=".ui.schedule.ScheduleFragment">
 
+
+
     <!-- ── AppBar с навигацией по дням ── -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
@@ -78,7 +80,7 @@
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:text="Данные от 15.01 14:30 (офлайн)"
+        tools:text="Данные от 30.02.2030 14:30 (офлайн)"
         tools:visibility="visible" />
 
     <androidx.core.widget.NestedScrollView
@@ -231,15 +233,6 @@
                     android:gravity="center"
                     android:text="@string/error_no_internet"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="Показываем кэшированные данные"
-                    android:textAppearance="?attr/textAppearanceBody2"
-                    android:textColor="?attr/colorPrimary" />
 
             </LinearLayout>
 

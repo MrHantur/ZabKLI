@@ -73,17 +73,24 @@
             tools:listitem="@layout/item_olympiad"/>
 
         <!-- Ошибки (оверлеи, позиционируются относительно родительского ConstraintLayout) -->
+
+        <!--
+            FIX 3: высота изменена с 0dp на wrap_content + minHeight.
+            При 0dp с двусторонними вертикальными констрейнтами (top_toTopOf + bottom_toBottomOf)
+            в родителе с layout_height="wrap_content" возникает циклическая зависимость,
+            и итоговая высота оказывается 0 — вьюхи невидимы даже при VISIBLE.
+        -->
         <LinearLayout
             android:id="@+id/errorNoInternet"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="300dp"
             android:orientation="vertical"
             android:gravity="center"
             android:padding="16dp"
             android:visibility="gone"
             android:background="@android:color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/filterContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
             <ImageView
@@ -101,17 +108,18 @@
                 android:layout_marginTop="16dp" />
         </LinearLayout>
 
+        <!-- FIX 3: аналогично -->
         <LinearLayout
             android:id="@+id/errorServer"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="300dp"
             android:orientation="vertical"
             android:gravity="center"
             android:padding="16dp"
             android:visibility="gone"
             android:background="@android:color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/filterContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
             <ImageView
@@ -156,17 +164,18 @@
                 android:layout_marginTop="16dp" />
         </LinearLayout>
 
+        <!-- FIX 3: аналогично -->
         <LinearLayout
             android:id="@+id/errorUnknown"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="300dp"
             android:orientation="vertical"
             android:gravity="center"
             android:padding="16dp"
             android:visibility="gone"
             android:background="@android:color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/filterContainer"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
             <ImageView

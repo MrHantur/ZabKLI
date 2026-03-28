@@ -67,7 +67,6 @@ class ScheduleFragment : Fragment() {
         private const val TIMEOUT_MS = 8_000
         private const val CACHE_VALID_DURATION_MS = 24 * 60 * 60 * 1000L // 24 часа
 
-        /** Преобразует Calendar.DAY_OF_WEEK в API weekday (0=пн, 5=сб, 6=вс). */
         fun todayApiWeekday(): Int = when (Calendar.getInstance()[Calendar.DAY_OF_WEEK]) {
             Calendar.MONDAY -> 0
             Calendar.TUESDAY -> 1

@@ -20,7 +20,6 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 class OlympiadsFragment : Fragment() {
@@ -143,6 +142,11 @@ class OlympiadsFragment : Fragment() {
         showOlympiads(olympiadsList)
     }
 
+    // FIX 1: функция больше не возвращает Result напрямую из withContext —
+    //        она просто suspend и возвращает Result. Логика исключений перенесена
+    //        во внешний try/catch в loadAllOlympiads.
+    //        Главное исправление: binding.textForReport НЕ трогаем здесь (фоновый поток).
+    //        Текст ошибки сохраняем в переменную и выставляем на главном потоке.
     private suspend fun fetchOlympiads(): Result<List<Olympiad>> = withContext(Dispatchers.IO) {
         try {
             val url = URL("$baseUrl/public/olympiads")
@@ -173,7 +177,6 @@ class OlympiadsFragment : Fragment() {
                 for (i in 0 until dataArray.length()) {
                     val obj = dataArray.getJSONObject(i)
 
-                    // Парсинг created_by (required)
                     val createdByObj = obj.optJSONObject("created_by")
                     val createdBy = if (createdByObj != null) {
                         UserInfo(
@@ -222,8 +225,8 @@ class OlympiadsFragment : Fragment() {
         } catch (e: SocketTimeoutException) {
             Result.Error(ErrorType.NO_INTERNET)
         } catch (e: Exception) {
-            binding.textForReport.text = e.toString()
-            Result.Error(ErrorType.UNKNOWN)
+            // FIX 1: сохраняем текст ошибки, чтобы выставить его на главном потоке
+            Result.Error(ErrorType.UNKNOWN, e.toString())
         }
     }
 
@@ -264,7 +267,7 @@ class OlympiadsFragment : Fragment() {
         }
     }
 
-    private fun showError(errorType: ErrorType) {
+    private fun showError(errorType: ErrorType, errorMessage: String? = null) {
         hideAllErrors()
         binding.recyclerView.visibility = View.GONE
         binding.errorNoOlymp.visibility = View.GONE
@@ -272,7 +275,13 @@ class OlympiadsFragment : Fragment() {
         when (errorType) {
             ErrorType.NO_INTERNET -> binding.errorNoInternet.visibility = View.VISIBLE
             ErrorType.SERVER -> binding.errorServer.visibility = View.VISIBLE
-            ErrorType.UNKNOWN -> binding.errorUnknown.visibility = View.VISIBLE
+            // FIX 1: выставляем текст ошибки здесь, на главном потоке
+            ErrorType.UNKNOWN -> {
+                binding.errorUnknown.visibility = View.VISIBLE
+                if (errorMessage != null) {
+                    binding.textForReport.text = errorMessage
+                }
+            }
         }
     }
 
@@ -292,7 +301,8 @@ class OlympiadsFragment : Fragment() {
 
     sealed class Result<out T> {
         data class Success<out T>(val data: T) : Result<T>()
-        data class Error(val type: ErrorType) : Result<Nothing>()
+        // FIX 1: добавлено поле errorMessage для передачи текста ошибки из IO-потока
+        data class Error(val type: ErrorType, val errorMessage: String? = null) : Result<Nothing>()
     }
 
     data class UserInfo(
@@ -321,19 +331,21 @@ class OlympiadsFragment : Fragment() {
     private class OlympiadsAdapter(
         private var olympiads: List<Olympiad> = emptyList(),
         private val onItemClick: (Olympiad) -> Unit,
-        private val dateFormatter: (String) -> String
+        // FIX 2: тип изменён с (String) -> String на (String?) -> String,
+        //        чтобы соответствовать formatDateString и принимать nullable date_end
+        private val dateFormatter: (String?) -> String
     ) : androidx.recyclerview.widget.RecyclerView.Adapter<OlympiadsAdapter.ViewHolder>() {
 
         class ViewHolder(
             private val binding: ItemOlympiadBinding,
-            private val dateFormatter: (String) -> String
+            // FIX 2: тип изменён с (String) -> String на (String?) -> String
+            private val dateFormatter: (String?) -> String
         ) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
 
             fun bind(olympiad: Olympiad, onClick: (Olympiad) -> Unit) {
                 binding.olympiadName.text = olympiad.name
                 binding.tagSubject.text = olympiad.subject
 
-                // Форматирование классов
                 if (olympiad.classes == null) {
                     binding.tagClasses.visibility = View.GONE
                 } else {
@@ -346,16 +358,15 @@ class OlympiadsFragment : Fragment() {
                         }
                 }
 
-                // Форматирование дат
                 val startDate = dateFormatter(olympiad.date_start)
                 binding.tagDate.text = if (olympiad.date_end.isNullOrEmpty() || olympiad.date_start == olympiad.date_end) {
                     startDate
                 } else {
+                    // FIX 2: теперь тип dateFormatter допускает String?, ошибки компиляции нет
                     val endDate = dateFormatter(olympiad.date_end)
                     "$startDate–$endDate"
                 }
 
-                // Время (опционально)
                 if (!olympiad.time.isNullOrEmpty()) {
                     binding.tagTime.visibility = View.VISIBLE
                     binding.tagTime.text = olympiad.time
