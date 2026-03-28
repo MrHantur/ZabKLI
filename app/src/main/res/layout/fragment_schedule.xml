@@ -81,7 +81,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="Данные от 30.02.2030 14:30 (офлайн)"
-        tools:visibility="visible" />
+        tools:visibility="gone" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/contentScroll"
