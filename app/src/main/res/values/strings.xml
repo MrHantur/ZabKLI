@@ -14,6 +14,16 @@
     <string name="back_description">Назад</string>
     <string name="forward_description">Вперёд</string>
 
+    <string name="settings_account">Аккаунт</string>
+    <string name="settings_anonymous">Аноним</string>
+    <string name="settings_role">Ученик</string>
+
+    <string name="login">Логин</string>
+    <string name="password_login">Пароль</string>
+    <string name="password_register">Пароль (минимум 8 символов)</string>
+    <string name="name">Имя</string>
+    <string name="surname">Фамилия</string>
+
     <string name="settings_name">Настройки</string>
     <string name="dark_mode_name">Включить тёмную тему</string>
     <string name="dark_mode_description">Делает элементы приложения темнее</string>
@@ -38,5 +48,9 @@
 
     <string name="error_no_internet">Похоже, что у вас нет доступа к интернету</string>
     <string name="error_unknown">Ой… произошла ошибка</string>
+    <string name="error_unknown_placeholder">Тут должно быть название ошибки. Если Вы это видите, значит всё совсем плохо</string>
     <string name="error_work_in_progress">Пока что мы ведём работы над этой частью</string>
+    <string name="error_server_problem">Не удалось подключиться к серверу</string>
+    <string name="error_no_olymp">Похоже олимпиад пока нет, возвращайтесь позже</string>
+    <string name="error_no_schedule">Очень странно, но расписания нет</string>
 </resources>
