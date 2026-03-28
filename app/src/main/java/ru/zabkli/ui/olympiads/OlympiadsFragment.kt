@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -40,6 +41,8 @@ class OlympiadsFragment : Fragment() {
 
     private var subjects = listOf("Все предметы")
     private var currentSubjectIndex = 0
+    private var currentSortType = SortType.DATE // Сортировка по дате по умолчанию
+    private var isSortAscending = false // По умолчанию новые олимпиады сверху
     private val baseUrl = "http://10.0.2.2:1717"
 
     private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
@@ -51,6 +54,8 @@ class OlympiadsFragment : Fragment() {
         private const val CACHE_TIMESTAMP = "cache_olympiads_timestamp"
         private const val TIMEOUT_MS = 10_000
         private const val CACHE_VALID_DURATION_MS = 24 * 60 * 60 * 1000L // 24 часа
+        private const val SORT_TYPE_KEY = "sort_type"
+        private const val SORT_ORDER_KEY = "sort_order"
     }
 
     override fun onCreateView(
@@ -62,9 +67,11 @@ class OlympiadsFragment : Fragment() {
 
         prefs = requireActivity().getSharedPreferences(SETTINGS_ZABKLI, AppCompatActivity.MODE_PRIVATE)
 
+        loadSortSettings()
+
         adapter = OlympiadsAdapter(
             onItemClick = { olympiad ->
-                // TODO: навигация на детальный экран
+                showOlympiadDetails(olympiad)
             },
             dateFormatter = ::formatDateString
         )
@@ -78,6 +85,20 @@ class OlympiadsFragment : Fragment() {
         return binding.root
     }
 
+    private fun loadSortSettings() {
+        val sortTypeOrdinal = prefs.getInt(SORT_TYPE_KEY, SortType.DATE.ordinal)
+        currentSortType = SortType.values().getOrNull(sortTypeOrdinal) ?: SortType.DATE
+        isSortAscending = prefs.getBoolean(SORT_ORDER_KEY, false)
+    }
+
+    private fun saveSortSettings() {
+        prefs.edit().apply {
+            putInt(SORT_TYPE_KEY, currentSortType.ordinal)
+            putBoolean(SORT_ORDER_KEY, isSortAscending)
+            apply()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         // Проверяем актуальность кэша при возврате на экран
@@ -89,6 +110,108 @@ class OlympiadsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun showOlympiadDetails(olympiad: Olympiad) {
+        val view = layoutInflater.inflate(R.layout.dialog_olympiad_detail, null)
+
+        val textName = view.findViewById<TextView>(R.id.detailName)
+        val textSubject = view.findViewById<TextView>(R.id.detailSubject)
+        val textDescription = view.findViewById<TextView>(R.id.detailDescription)
+        val textDate = view.findViewById<TextView>(R.id.detailDate)
+        val textClasses = view.findViewById<TextView>(R.id.detailClasses)
+        val textAddedBy = view.findViewById<TextView>(R.id.detailAddedBy)
+        val textApprovedBy = view.findViewById<TextView>(R.id.detailApprovedBy)
+        val buttonLink =
+            view.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonLink)
+
+        // Заполняем данные
+        textName.text = olympiad.name
+        textSubject.text = olympiad.subject
+
+        // Описание
+        if (!olympiad.description.isNullOrEmpty()) {
+            textDescription.text = olympiad.description
+            textDescription.visibility = View.VISIBLE
+        } else {
+            textDescription.visibility = View.GONE
+        }
+
+        // Даты
+        val startDate = formatDateString(olympiad.date_start)
+        val endDate = formatDateString(olympiad.date_end)
+        textDate.text =
+            if (olympiad.date_end.isNullOrEmpty() || olympiad.date_start == olympiad.date_end) {
+                "Дата: $startDate"
+            } else {
+                "Даты: $startDate – $endDate"
+            }
+
+        // Классы
+        if (!olympiad.classes.isNullOrEmpty()) {
+            textClasses.text = "Классы: ${olympiad.classes}"
+            textClasses.visibility = View.VISIBLE
+        } else {
+            textClasses.visibility = View.GONE
+        }
+
+        // Кнопка ссылки
+        if (!olympiad.link.isNullOrEmpty()) {
+            buttonLink.visibility = View.VISIBLE
+            buttonLink.setOnClickListener {
+                try {
+                    val intent = android.content.Intent(
+                        android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse(olympiad.link)
+                    )
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "Не удалось открыть ссылку",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            buttonLink.visibility = View.GONE
+        }
+
+        // Кто добавил
+        val creatorName = buildString {
+            if (!olympiad.created_by.first_name.isNullOrEmpty()) append(olympiad.created_by.first_name)
+            if (!olympiad.created_by.last_name.isNullOrEmpty()) {
+                if (isNotEmpty()) append(" ")
+                append(olympiad.created_by.last_name)
+            }
+            if (isEmpty()) append(olympiad.created_by.username)
+        }
+        textAddedBy.text = "Добавил: $creatorName"
+        textAddedBy.visibility = View.VISIBLE
+
+        if (!olympiad.classes.isNullOrEmpty()) {
+            // Кто утвердил
+            val approverName = buildString {
+                if (!olympiad.approved_by?.first_name.isNullOrEmpty()) append(olympiad.approved_by.first_name)
+                if (!olympiad.approved_by?.last_name.isNullOrEmpty()) {
+                    if (isNotEmpty()) append(" ")
+                    append(olympiad.approved_by.last_name)
+                }
+                if (isEmpty()) append(olympiad.approved_by?.username)
+            }
+            textApprovedBy.text = "Утвердил: $approverName"
+            textApprovedBy.visibility = View.VISIBLE
+        } else {
+            textApprovedBy.visibility = View.GONE
+        }
+
+        // Создаем и показываем MaterialAlertDialog
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setView(view)
+            .setPositiveButton("Закрыть") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     // ─────────────────────────────────────────────
@@ -265,11 +388,97 @@ class OlympiadsFragment : Fragment() {
 
     private fun setupSortButton() {
         binding.buttonSort.setOnClickListener {
-            android.widget.Toast.makeText(
-                requireContext(),
-                "Сортировка в разработке",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+            showSortDialog()
+        }
+        updateSortButtonText()
+    }
+
+    private fun showSortDialog() {
+        val sortOptions = SortType.values().map { it.title }.toTypedArray()
+        val currentIndex = SortType.values().indexOf(currentSortType)
+
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Тип сортировки")
+        builder.setSingleChoiceItems(sortOptions, currentIndex) { dialog, which ->
+            currentSortType = SortType.values()[which]
+            saveSortSettings() // Сохраняем настройки
+            updateSortButtonText()
+            filterOlympiadsLocally()
+            dialog.dismiss()
+        }
+
+        builder.setNeutralButton(if (isSortAscending) "↑ По возрастанию" else "↓ По убыванию") { dialog, _ ->
+            isSortAscending = !isSortAscending
+            saveSortSettings() // Сохраняем настройки
+            updateSortButtonText()
+            filterOlympiadsLocally()
+            dialog.dismiss()
+            showSortDialog()
+        }
+
+        builder.show()
+    }
+
+    private fun updateSortButtonText() {
+        val orderSymbol = if (isSortAscending) "↑" else "↓"
+        binding.buttonSort.text = "$orderSymbol ${currentSortType.title}"
+    }
+
+    private fun filterOlympiadsLocally() {
+        if (!isAdded || _binding == null) return
+
+        val selectedSubject = subjects.getOrNull(currentSubjectIndex) ?: "Все предметы"
+
+        // Сначала фильтруем по предмету
+        var filteredList = if (selectedSubject == "Все предметы") {
+            allOlympiads
+        } else {
+            allOlympiads.filter { it.subject == selectedSubject }
+        }
+
+        // Затем применяем сортировку
+        filteredList = sortOlympiads(filteredList)
+
+        olympiadsList = filteredList
+        showOlympiads(olympiadsList)
+    }
+
+    private fun sortOlympiads(olympiads: List<Olympiad>): List<Olympiad> {
+        return when (currentSortType) {
+            SortType.DATE -> {
+                olympiads.sortedWith(compareBy({ parseDateForSort(it.date_start) }, { it.name }))
+                    .let { if (isSortAscending) it else it.reversed() }
+            }
+            SortType.NAME -> {
+                olympiads.sortedBy { it.name.lowercase() }
+                    .let { if (isSortAscending) it else it.reversed() }
+            }
+            SortType.SUBJECT -> {
+                olympiads.sortedWith(compareBy({ it.subject.lowercase() }, { it.name }))
+                    .let { if (isSortAscending) it else it.reversed() }
+            }
+            SortType.CLASSES -> {
+                olympiads.sortedWith(compareBy({ parseClassForSort(it.classes) }, { it.name }))
+                    .let { if (isSortAscending) it else it.reversed() }
+            }
+        }
+    }
+
+    private fun parseDateForSort(dateString: String?): Long {
+        if (dateString.isNullOrBlank()) return 0L
+        return try {
+            inputDateFormat.parse(dateString)?.time ?: 0L
+        } catch (e: Exception) {
+            0L
+        }
+    }
+
+    private fun parseClassForSort(classes: String?): Int {
+        if (classes.isNullOrBlank()) return 0
+        return try {
+            classes.split("-").firstOrNull()?.trim()?.toIntOrNull() ?: 0
+        } catch (e: Exception) {
+            0
         }
     }
 
@@ -360,18 +569,6 @@ class OlympiadsFragment : Fragment() {
         updateSubjectButtonText()
     }
 
-    private fun filterOlympiadsLocally() {
-        if (!isAdded || _binding == null) return
-
-        val selectedSubject = subjects.getOrNull(currentSubjectIndex) ?: "Все предметы"
-        olympiadsList = if (selectedSubject == "Все предметы") {
-            allOlympiads
-        } else {
-            allOlympiads.filter { it.subject == selectedSubject }
-        }
-        showOlympiads(olympiadsList)
-    }
-
     private suspend fun fetchOlympiads(): Result<List<Olympiad>> = withContext(Dispatchers.IO) {
         try {
             val url = URL("$baseUrl/public/olympiads")
@@ -425,14 +622,14 @@ class OlympiadsFragment : Fragment() {
                     olympiads.add(
                         Olympiad(
                             id = obj.optInt("id"),
-                            name = obj.optString("name", ""),
-                            description = obj.optString("description").takeIf { it.isNotEmpty() },
-                            subject = obj.optString("subject", ""),
-                            date_start = obj.optString("date_start", ""),
-                            date_end = obj.optString("date_end").takeIf { it.isNotEmpty() },
-                            time = obj.optString("time").takeIf { it.isNotEmpty() },
-                            classes = obj.optString("classes").takeIf { it.isNotEmpty() },
-                            stage = obj.optString("stage").takeIf { it.isNotEmpty() },
+                            name = obj.optString("name", "").takeIf { it != "null" } ?: "",
+                            description = obj.optString("description").takeIf { it.isNotEmpty() && it != "null" },
+                            subject = obj.optString("subject", "").takeIf { it != "null" } ?: "",
+                            date_start = obj.optString("date_start", "").takeIf { it != "null" } ?: "",
+                            date_end = obj.optString("date_end").takeIf { it.isNotEmpty() && it != "null" },
+                            time = obj.optString("time").takeIf { it.isNotEmpty() && it != "null" },
+                            classes = obj.optString("classes").takeIf { it.isNotEmpty() && it != "null" },
+                            stage = obj.optString("stage").takeIf { it.isNotEmpty() && it != "null" },
                             level = if (obj.has("level") && !obj.isNull("level")) obj.optInt("level") else 1,
                             link = obj.optString("link").takeIf { it.isNotEmpty() && it != "null" },
                             created_by = createdBy,
@@ -483,6 +680,8 @@ class OlympiadsFragment : Fragment() {
     private fun showOlympiads(olympiads: List<Olympiad>) {
         if (!isAdded || _binding == null) return
         hideAllErrors()
+        hideCacheInfo()
+        _binding?.progressBar?.visibility = View.GONE
         olympiadsList = olympiads
 
         if (olympiads.isEmpty()) {
@@ -524,7 +723,17 @@ class OlympiadsFragment : Fragment() {
         _binding?.errorUnknown?.visibility = View.GONE
     }
 
-    enum class ErrorType { NO_INTERNET, SERVER, UNKNOWN }
+    enum class ErrorType {
+        NO_INTERNET,
+        SERVER,
+        UNKNOWN
+    }
+    enum class SortType(val title: String) {
+        DATE("По дате"),
+        NAME("По названию"),
+        SUBJECT("По предмету"),
+        CLASSES("По классам")
+    }
 
     sealed class Result<out T> {
         data class Success<out T>(val data: T) : Result<T>()

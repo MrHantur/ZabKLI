@@ -10,7 +10,6 @@
         android:id="@+id/olympiad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        
         android:padding="16dp"
         app:strokeWidth="1dp"
         app:strokeColor="#1A000000"
@@ -22,7 +21,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-
             android:paddingEnd="8dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp">
