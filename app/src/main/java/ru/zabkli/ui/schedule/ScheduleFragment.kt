@@ -48,15 +48,12 @@ class ScheduleFragment : Fragment() {
     // Текущий API-weekday (0=пн … 5=сб), инициализируется по системному времени
     private var currentWeekday: Int = todayApiWeekday()
 
-    private val calendar: Calendar = Calendar.getInstance()
-    private val currentTimeMinutes: Int =
-        calendar[Calendar.HOUR_OF_DAY] * 60 + calendar[Calendar.MINUTE]
-
     private val mainHandler = Handler(Looper.getMainLooper())
 
     // Кэшированные данные
     private var cachedSchedule: List<Schedule> = emptyList()
     private var isUsingCache: Boolean = false
+    private var isInitialLoad: Boolean = true
 
     companion object {
         private const val BASE_URL = "http://10.0.2.2:1717"
@@ -78,6 +75,12 @@ class ScheduleFragment : Fragment() {
         }
     }
 
+    data class UserInfo(
+        val username: String,
+        val first_name: String? = null,
+        val last_name: String? = null
+    )
+
     data class Schedule(
         val id: Int,
         val className: String,
@@ -88,7 +91,9 @@ class ScheduleFragment : Fragment() {
         val room: String?,
         val timeStart: String?,
         val timeEnd: String?,
-        val status: String = "active"  // "active" или "cancelled"
+        val status: String = "active",  // "active" или "cancelled"
+        val created_by: UserInfo,
+        val approved_by: UserInfo?
     )
 
     // ─────────────────────────────────────────────
@@ -129,9 +134,105 @@ class ScheduleFragment : Fragment() {
     // ─────────────────────────────────────────────
 
     private fun setupRecyclerView() {
-        adapter = ScheduleAdapter(emptyList())
+        adapter = ScheduleAdapter(
+            emptyList(),
+            onItemClick = { schedule ->
+                showScheduleDetails(schedule)
+            }
+        )
         binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerView.adapter = adapter
+    }
+
+    private fun showScheduleDetails(schedule: Schedule) {
+        val view = layoutInflater.inflate(R.layout.dialog_schedule_detail, null)
+
+        val textSubject = view.findViewById<TextView>(R.id.detailSubject)
+        val textLessonNum = view.findViewById<TextView>(R.id.detailLessonNum)
+        val textTime = view.findViewById<TextView>(R.id.detailTime)
+        val textTeacher = view.findViewById<TextView>(R.id.detailTeacher)
+        val textRoom = view.findViewById<TextView>(R.id.detailRoom)
+        val textStatus = view.findViewById<TextView>(R.id.detailStatus)
+        val textAddedBy = view.findViewById<TextView>(R.id.detailAddedBy)
+        val textApprovedBy = view.findViewById<TextView>(R.id.detailApprovedBy)
+
+        // Заполняем данные
+        textSubject.text = schedule.subject
+
+        // Номер урока
+        textLessonNum.text = "Урок № ${schedule.lessonNum}"
+
+        // Время
+        if (!schedule.timeStart.isNullOrEmpty() && !schedule.timeEnd.isNullOrEmpty()) {
+            textTime.text = "Время: ${schedule.timeStart} – ${schedule.timeEnd}"
+            textTime.visibility = View.VISIBLE
+        } else {
+            textTime.visibility = View.GONE
+        }
+
+        // Учитель
+        if (!schedule.teacher.isNullOrEmpty()) {
+            textTeacher.text = "Учитель: ${schedule.teacher}"
+            textTeacher.visibility = View.VISIBLE
+        } else {
+            textTeacher.visibility = View.GONE
+        }
+
+        // Кабинет
+        if (!schedule.room.isNullOrEmpty()) {
+            textRoom.text = "Кабинет: ${schedule.room}"
+            textRoom.visibility = View.VISIBLE
+        } else {
+            textRoom.visibility = View.GONE
+        }
+
+        // Статус (отмена)
+        if (schedule.status == "cancelled") {
+            textStatus.text = "Статус: ОТМЕНЁН"
+            textStatus.visibility = View.VISIBLE
+        } else {
+            textStatus.visibility = View.GONE
+        }
+
+        if (schedule.created_by.username != "admin") {
+            // Кто добавил
+            val creatorName = buildString {
+                if (!schedule.created_by.first_name.isNullOrEmpty()) append(schedule.created_by.first_name)
+                if (!schedule.created_by.last_name.isNullOrEmpty()) {
+                    if (isNotEmpty()) append(" ")
+                    append(schedule.created_by.last_name)
+                }
+                if (isEmpty()) append(schedule.created_by.username)
+            }
+            textAddedBy.text = "Добавил: $creatorName"
+            textAddedBy.visibility = View.VISIBLE
+        } else {
+            textAddedBy.visibility = View.GONE
+        }
+
+        if (schedule.approved_by != null) {
+            // Кто утвердил
+            val approverName = buildString {
+                if (!schedule.approved_by.first_name.isNullOrEmpty()) append(schedule.approved_by.first_name)
+                if (!schedule.approved_by.last_name.isNullOrEmpty()) {
+                    if (isNotEmpty()) append(" ")
+                    append(schedule.approved_by.last_name)
+                }
+                if (isEmpty()) append(schedule.approved_by.username)
+            }
+            textApprovedBy.text = "Утвердил: $approverName"
+            textApprovedBy.visibility = View.VISIBLE
+        } else {
+            textApprovedBy.visibility = View.GONE
+        }
+
+        // Показываем диалог
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setView(view)
+            .setPositiveButton("Закрыть") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun setupNavButtons() {
@@ -163,6 +264,27 @@ class ScheduleFragment : Fragment() {
                     put("room", lesson.room)
                     put("time_start", lesson.timeStart)
                     put("time_end", lesson.timeEnd)
+                    put("status", lesson.status)
+
+                    // created_by
+                    val createdByObj = JSONObject().apply {
+                        put("username", lesson.created_by.username)
+                        put("first_name", lesson.created_by.first_name ?: "")
+                        put("last_name", lesson.created_by.last_name ?: "")
+                    }
+                    put("created_by", createdByObj)
+
+                    // approved_by
+                    if (lesson.approved_by != null) {
+                        val approvedByObj = JSONObject().apply {
+                            put("username", lesson.approved_by.username)
+                            put("first_name", lesson.approved_by.first_name ?: "")
+                            put("last_name", lesson.approved_by.last_name ?: "")
+                        }
+                        put("approved_by", approvedByObj)
+                    } else {
+                        put("approved_by", JSONObject.NULL)
+                    }
                 }
                 jsonArray.put(obj)
             }
@@ -203,29 +325,63 @@ class ScheduleFragment : Fragment() {
 
         for (i in 0 until jsonArray.length()) {
             val obj = jsonArray.getJSONObject(i)
+
+            // Парсинг created_by и approved_by (как выше в fetchSchedule)
+            val createdByObj = obj.optJSONObject("created_by")
+            val createdBy = if (createdByObj != null) {
+                UserInfo(
+                    username = createdByObj.getString("username"),
+                    first_name = createdByObj.optString("first_name").takeIf { it.isNotEmpty() },
+                    last_name = createdByObj.optString("last_name").takeIf { it.isNotEmpty() }
+                )
+            } else UserInfo(username = "unknown")
+
+            val approvedByObj = obj.optJSONObject("approved_by")
+            val approvedBy = if (approvedByObj != null) {
+                UserInfo(
+                    username = approvedByObj.getString("username"),
+                    first_name = approvedByObj.optString("first_name").takeIf { it.isNotEmpty() },
+                    last_name = approvedByObj.optString("last_name").takeIf { it.isNotEmpty() }
+                )
+            } else null
+
             val lesson = Schedule(
                 id = obj.optInt("id"),
                 className = obj.optString("class_name", ""),
                 weekday = obj.optInt("weekday"),
                 lessonNum = obj.optInt("lesson_num"),
                 subject = obj.optString("subject", ""),
-                teacher = if (obj.has("teacher") && !obj.isNull("teacher")) {
-                    obj.getString("teacher")
-                } else null,
-                room = if (obj.has("room") && !obj.isNull("room")) {
-                    obj.getString("room")
-                } else null,
-                timeStart = if (obj.has("time_start") && !obj.isNull("time_start")) {
-                    obj.getString("time_start")
-                } else null,
-                timeEnd = if (obj.has("time_end") && !obj.isNull("time_end")) {
-                    obj.getString("time_end")
-                } else null
+                teacher = if (obj.has("teacher") && !obj.isNull("teacher")) obj.getString("teacher") else null,
+                room = if (obj.has("room") && !obj.isNull("room")) obj.getString("room") else null,
+                timeStart = if (obj.has("time_start") && !obj.isNull("time_start")) obj.getString("time_start") else null,
+                timeEnd = if (obj.has("time_end") && !obj.isNull("time_end")) obj.getString("time_end") else null,
+                status = if (obj.has("status") && !obj.isNull("status")) obj.getString("status") else "active",
+                created_by = createdBy,
+                approved_by = approvedBy
             )
             lessons.add(lesson)
         }
-
         return lessons
+    }
+
+    // ─────────────────────────────────────────────
+    // Встроенные данные (res/raw/schedule.json)
+    // ─────────────────────────────────────────────
+
+    private fun loadBuiltinSchedule(): Boolean {
+        return try {
+            val inputStream = resources.openRawResource(R.raw.schedule)
+            val jsonString = inputStream.bufferedReader().readText()
+            inputStream.close()
+            val lessons = parseScheduleFromJson(jsonString)
+            if (lessons.isNotEmpty()) {
+                cachedSchedule = lessons
+                true
+            } else false
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     private fun isCacheExpired(): Boolean {
@@ -281,6 +437,23 @@ class ScheduleFragment : Fragment() {
         Thread {
             val result = fetchSchedule(currentWeekday, className)
 
+            // При первом заходе — параллельно грузим следующий день
+            if (isInitialLoad) {
+                isInitialLoad = false
+                val nextWeekday = if (currentWeekday >= 5) 0 else currentWeekday + 1
+                Thread {
+                    fetchSchedule(nextWeekday, className).let { nextResult ->
+                        if (nextResult is ScheduleResult.Success) {
+                            // Объединяем с основным кэшем (если он уже сохранён)
+                            val existing = cachedSchedule.toMutableList()
+                            val nextDayIds = nextResult.allLessons.map { it.id }.toSet()
+                            val merged = existing.filter { it.id !in nextDayIds } + nextResult.allLessons
+                            cachedSchedule = merged.sortedBy { it.lessonNum }
+                        }
+                    }
+                }.start()
+            }
+
             if (!isAdded) return@Thread
 
             mainHandler.post {
@@ -295,7 +468,9 @@ class ScheduleFragment : Fragment() {
                         isUsingCache = false
                         hideCacheInfo()
 
-                        val dayLessons = result.allLessons.filter { it.weekday == currentWeekday }
+                        val dayLessons = result.allLessons
+                            .filter { it.weekday == currentWeekday && it.className == className }
+                            .sortedBy { it.lessonNum }
                         if (dayLessons.isEmpty()) {
                             showError(binding.errorNoLessons)
                         } else {
@@ -304,12 +479,23 @@ class ScheduleFragment : Fragment() {
                         }
                     }
                     is ScheduleResult.NoInternet, is ScheduleResult.ServerError -> {
-                        // Пытаемся загрузить из кэша
-                        if (loadCachedSchedule()) {
-                            isUsingCache = true
-                            showCacheInfo()
+                        // 1. Кэш → 2. Встроенные данные из res/raw/schedule.json
+                        val loaded = loadCachedSchedule() || loadBuiltinSchedule()
 
-                            val dayLessons = cachedSchedule.filter { it.weekday == currentWeekday }
+                        if (loaded) {
+                            val fromCache = prefs.getString(CACHE_SCHEDULE, null) != null
+                            if (fromCache) {
+                                isUsingCache = true
+                                showCacheInfo()
+                            } else {
+                                binding.textCacheInfo.visibility = View.VISIBLE
+                                binding.textCacheInfo.text = "Показаны встроенные данные расписания"
+                                binding.textCacheInfo.setTextColor(requireContext().getColor(R.color.warning_color))
+                            }
+
+                            val dayLessons = cachedSchedule
+                                .filter { it.weekday == currentWeekday && it.className == className }
+                                .sortedBy { it.lessonNum }
                             if (dayLessons.isEmpty()) {
                                 showError(binding.errorNoLessons)
                             } else {
@@ -317,7 +503,6 @@ class ScheduleFragment : Fragment() {
                                 updateNextLesson(dayLessons)
                             }
                         } else {
-                            // Кэша нет — показываем ошибку
                             if (result is ScheduleResult.NoInternet) {
                                 showError(binding.errorNoInternet)
                             } else {
@@ -334,21 +519,56 @@ class ScheduleFragment : Fragment() {
         val binding = _binding ?: return
 
         val todayWeekday = todayApiWeekday()
+
         if (currentWeekday != todayWeekday) {
-            binding.nextLessonCard.visibility = View.GONE
+            binding.nextLessonCard.root.visibility = View.GONE
+            binding.labelNextLesson.visibility = View.GONE
             return
         }
 
+        val calendar = Calendar.getInstance()
+        val currentTimeMinutes = calendar[Calendar.HOUR_OF_DAY] * 60 + calendar[Calendar.MINUTE]
+
+        // Ищем следующий урок (игнорируем отменённые)
         val nextLesson = lessons
-            .filter { it.timeStart != null }
+            .filter { it.timeStart != null && it.status != "cancelled" }
             .firstOrNull { parseMinutes(it.timeStart!!) > currentTimeMinutes }
 
         if (nextLesson != null) {
-            binding.nextLessonCard.visibility = View.VISIBLE
-            binding.textNextLesson.text = nextLesson.subject
-            binding.timeNextLesson.text = "${nextLesson.timeStart} – ${nextLesson.timeEnd}"
+            binding.labelNextLesson.visibility = View.VISIBLE
+            binding.nextLessonCard.root.visibility = View.VISIBLE
+
+            // Обращаемся к элементам внутри включенного макета:
+            val itemBinding = binding.nextLessonCard
+
+            itemBinding.lessonNum.text = nextLesson.lessonNum.toString()
+            itemBinding.subjectName.text = nextLesson.subject
+            itemBinding.lessonTime.text = "${nextLesson.timeStart} – ${nextLesson.timeEnd}"
+
+            // Настраиваем тег учителя
+            if (!nextLesson.teacher.isNullOrBlank()) {
+                itemBinding.teacherName.visibility = View.VISIBLE
+                itemBinding.teacherName.text = nextLesson.teacher
+            } else {
+                itemBinding.teacherName.visibility = View.GONE
+            }
+
+            // Настраиваем тег кабинета
+            if (!nextLesson.room.isNullOrBlank()) {
+                itemBinding.roomNumber.visibility = View.VISIBLE
+                itemBinding.roomNumber.text = "Каб. ${nextLesson.room}"
+            } else {
+                itemBinding.roomNumber.visibility = View.GONE
+            }
+
+            // Прячем статус отмены и сбрасываем стили (ведь отменённые мы уже отфильтровали)
+            itemBinding.lessonStatus.visibility = View.GONE
+            itemBinding.subjectName.paintFlags = itemBinding.subjectName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+            itemBinding.subjectName.setTextColor(requireContext().getColor(android.R.color.black))
+
         } else {
-            binding.nextLessonCard.visibility = View.GONE
+            binding.labelNextLesson.visibility = View.GONE
+            binding.nextLessonCard.root.visibility = View.GONE
         }
     }
 
@@ -398,27 +618,43 @@ class ScheduleFragment : Fragment() {
                 val dataArray = json.optJSONArray("data") ?: JSONArray()
                 for (i in 0 until dataArray.length()) {
                     val obj = dataArray.getJSONObject(i)
+
+                    // 🔹 Парсим created_by
+                    val createdByObj = obj.optJSONObject("created_by")
+                    val createdBy = if (createdByObj != null) {
+                        UserInfo(
+                            username = createdByObj.getString("username"),
+                            first_name = createdByObj.optString("first_name").takeIf { it.isNotEmpty() },
+                            last_name = createdByObj.optString("last_name").takeIf { it.isNotEmpty() }
+                        )
+                    } else {
+                        UserInfo(username = "unknown")
+                    }
+
+                    // 🔹 Парсим approved_by
+                    val approvedByObj = obj.optJSONObject("approved_by")
+                    val approvedBy = if (approvedByObj != null) {
+                        UserInfo(
+                            username = approvedByObj.getString("username"),
+                            first_name = approvedByObj.optString("first_name").takeIf { it.isNotEmpty() },
+                            last_name = approvedByObj.optString("last_name").takeIf { it.isNotEmpty() }
+                        )
+                    } else null
+
+                    // 🔹 Создаём объект Schedule с новыми полями
                     val lesson = Schedule(
                         id = obj.optInt("id"),
                         className = obj.optString("class_name", ""),
                         weekday = obj.optInt("weekday"),
                         lessonNum = obj.optInt("lesson_num"),
                         subject = obj.optString("subject", ""),
-                        teacher = if (obj.has("teacher") && !obj.isNull("teacher")) {
-                            obj.getString("teacher")
-                        } else null,
-                        room = if (obj.has("room") && !obj.isNull("room")) {
-                            obj.getString("room")
-                        } else null,
-                        timeStart = if (obj.has("time_start") && !obj.isNull("time_start")) {
-                            obj.getString("time_start")
-                        } else null,
-                        timeEnd = if (obj.has("time_end") && !obj.isNull("time_end")) {
-                            obj.getString("time_end")
-                        } else null,
-                        status = if (obj.has("status") && !obj.isNull("status")) {
-                            obj.getString("status")
-                        } else "active"
+                        teacher = if (obj.has("teacher") && !obj.isNull("teacher")) obj.getString("teacher") else null,
+                        room = if (obj.has("room") && !obj.isNull("room")) obj.getString("room") else null,
+                        timeStart = if (obj.has("time_start") && !obj.isNull("time_start")) obj.getString("time_start") else null,
+                        timeEnd = if (obj.has("time_end") && !obj.isNull("time_end")) obj.getString("time_end") else null,
+                        status = if (obj.has("status") && !obj.isNull("status")) obj.getString("status") else "active",
+                        created_by = createdBy,      // ← передаём
+                        approved_by = approvedBy     // ← передаём
                     )
                     allLessons.add(lesson)
                 }
@@ -472,8 +708,10 @@ class ScheduleFragment : Fragment() {
     // Внутренний адаптер
     // ─────────────────────────────────────────────
 
-    private class ScheduleAdapter(private var lessons: List<Schedule>) :
-        RecyclerView.Adapter<ScheduleAdapter.ViewHolder>() {
+    private class ScheduleAdapter(
+        private var lessons: List<Schedule>,
+        private val onItemClick: (Schedule) -> Unit
+    ) : RecyclerView.Adapter<ScheduleAdapter.ViewHolder>() {
 
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val lessonCard: MaterialCardView = view.findViewById(R.id.lessonCard)
@@ -534,6 +772,10 @@ class ScheduleFragment : Fragment() {
                 holder.roomNumber.text = "Каб. ${lesson.room}"
             } else {
                 holder.roomNumber.visibility = View.GONE
+            }
+
+            holder.itemView.setOnClickListener {
+                onItemClick(lesson)
             }
         }
 
