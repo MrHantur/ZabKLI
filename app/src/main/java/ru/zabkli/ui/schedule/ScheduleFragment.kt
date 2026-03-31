@@ -9,15 +9,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
+import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import org.json.JSONArray
 import org.json.JSONObject
+import ru.zabkli.AuthManager
 import ru.zabkli.R
+import ru.zabkli.SettingsActivity
 import ru.zabkli.databinding.FragmentScheduleBinding
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URL
@@ -65,6 +73,8 @@ class ScheduleFragment : Fragment() {
         private const val CACHE_CLASS_ID = "cache_class_id"
         private const val TIMEOUT_MS = 8_000
         private const val CACHE_VALID_DURATION_MS = 24 * 60 * 60 * 1000L // 24 часа
+
+        private val TIME_REGEX = Regex("^\\d{2}:\\d{2}$")
 
         fun todayApiWeekday(): Int = when (Calendar.getInstance()[Calendar.DAY_OF_WEEK]) {
             Calendar.MONDAY -> 0
@@ -228,13 +238,165 @@ class ScheduleFragment : Fragment() {
             textApprovedBy.visibility = View.GONE
         }
 
-        // Показываем диалог
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+        // Проверяем роль: кнопка редактирования только для editor / admin
+        val role = AuthManager.getRole(requireContext())
+        val canEdit = role == SettingsActivity.UserType.EDITOR
+                || role == SettingsActivity.UserType.ADMIN
+
+        val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setView(view)
-            .setPositiveButton("Закрыть") { dialog, _ ->
+            .setPositiveButton("Закрыть") { dialog, _ -> dialog.dismiss() }
+
+        if (canEdit) {
+            builder.setNeutralButton("Изменить") { dialog, _ ->
                 dialog.dismiss()
+                showEditLessonDialog(schedule)
             }
-            .show()
+        }
+
+        builder.show()
+    }
+
+    // ─────────────────────────────────────────────
+    // Диалог редактирования урока (editor / admin)
+    // ─────────────────────────────────────────────
+
+    private fun showEditLessonDialog(schedule: Schedule) {
+        val view = layoutInflater.inflate(R.layout.dialog_edit_lesson, null)
+
+        val layoutSubject   = view.findViewById<TextInputLayout>(R.id.layoutSubject)
+        val layoutTimeStart = view.findViewById<TextInputLayout>(R.id.layoutTimeStart)
+        val layoutTimeEnd   = view.findViewById<TextInputLayout>(R.id.layoutTimeEnd)
+
+        val editSubject   = view.findViewById<TextInputEditText>(R.id.editSubject)
+        val editTeacher   = view.findViewById<TextInputEditText>(R.id.editTeacher)
+        val editRoom      = view.findViewById<TextInputEditText>(R.id.editRoom)
+        val editTimeStart = view.findViewById<TextInputEditText>(R.id.editTimeStart)
+        val editTimeEnd   = view.findViewById<TextInputEditText>(R.id.editTimeEnd)
+        val checkCancelled = view.findViewById<MaterialCheckBox>(R.id.checkCancelled)
+
+        // Предзаполняем текущими значениями
+        editSubject.setText(schedule.subject)
+        editTeacher.setText(schedule.teacher ?: "")
+        editRoom.setText(schedule.room ?: "")
+        editTimeStart.setText(schedule.timeStart ?: "")
+        editTimeEnd.setText(schedule.timeEnd ?: "")
+        checkCancelled.isChecked = schedule.status == "cancelled"
+
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Редактировать урок")
+            .setView(view)
+            .setPositiveButton("Сохранить", null) // переопределим ниже, чтобы не закрывать при ошибке
+            .setNegativeButton("Отмена") { d, _ -> d.dismiss() }
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                // Валидация
+                var hasError = false
+
+                val subject = editSubject.text?.toString()?.trim() ?: ""
+                if (subject.isEmpty()) {
+                    layoutSubject.error = "Поле обязательно"
+                    hasError = true
+                } else {
+                    layoutSubject.error = null
+                }
+
+                val rawStart = editTimeStart.text?.toString()?.trim() ?: ""
+                val rawEnd   = editTimeEnd.text?.toString()?.trim()   ?: ""
+
+                if (rawStart.isNotEmpty() && !TIME_REGEX.matches(rawStart)) {
+                    layoutTimeStart.error = "Формат ЧЧ:ММ"
+                    hasError = true
+                } else {
+                    layoutTimeStart.error = null
+                }
+
+                if (rawEnd.isNotEmpty() && !TIME_REGEX.matches(rawEnd)) {
+                    layoutTimeEnd.error = "Формат ЧЧ:ММ"
+                    hasError = true
+                } else {
+                    layoutTimeEnd.error = null
+                }
+
+                if (hasError) return@setOnClickListener
+
+                val body = JSONObject().apply {
+                    put("subject", subject)
+                    put("teacher", editTeacher.text?.toString()?.trim()?.ifEmpty { null })
+                    put("room",    editRoom.text?.toString()?.trim()?.ifEmpty { null })
+                    put("time_start", rawStart.ifEmpty { null })
+                    put("time_end",   rawEnd.ifEmpty { null })
+                    put("status", if (checkCancelled.isChecked) "cancelled" else "active")
+                }
+
+                val token = AuthManager.getAccessToken(requireContext())
+                if (token == null) {
+                    Toast.makeText(requireContext(), "Нет токена авторизации", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+
+                // Отключаем кнопку на время запроса
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).isEnabled = false
+
+                Thread {
+                    val error = patchLesson(schedule.id, body, token)
+                    mainHandler.post {
+                        if (!isAdded) return@post
+                        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = true
+
+                        if (error == null) {
+                            Toast.makeText(requireContext(), "Урок обновлён", Toast.LENGTH_SHORT).show()
+                            dialog.dismiss()
+                            loadCurrentDay() // обновляем список
+                        } else {
+                            Toast.makeText(requireContext(), "Ошибка: $error", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.start()
+            }
+        }
+
+        dialog.show()
+    }
+
+    // ─────────────────────────────────────────────
+    // PATCH /schedule/{id}
+    // ─────────────────────────────────────────────
+
+    private fun patchLesson(id: Int, body: JSONObject, token: String): String? {
+        return try {
+            val url = URL("$BASE_URL/schedule/$id")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.apply {
+                requestMethod = "PATCH"
+                connectTimeout = TIMEOUT_MS
+                readTimeout    = TIMEOUT_MS
+                doOutput       = true
+                setRequestProperty("Content-Type",  "application/json")
+                setRequestProperty("Accept",        "application/json")
+                setRequestProperty("Authorization", "Bearer $token")
+            }
+            conn.outputStream.use { out ->
+                OutputStreamWriter(out).use { it.write(body.toString()) }
+            }
+            return when (conn.responseCode) {
+                200  -> null
+                401  -> "Требуется авторизация (401)"
+                403  -> "Доступ запрещён (403)"
+                else -> {
+                    val errBody = conn.errorStream?.bufferedReader()?.readText() ?: ""
+                    try {
+                        JSONObject(errBody).optString("detail", "Ошибка ${conn.responseCode}")
+                    } catch (e: Exception) {
+                        "Ошибка ${conn.responseCode}"
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.message ?: "Неизвестная ошибка"
+        }
     }
 
     private fun setupNavButtons() {
@@ -381,7 +543,6 @@ class ScheduleFragment : Fragment() {
                 true
             } else false
         } catch (e: Exception) {
-            e.printStackTrace()
             false
         }
     }
@@ -391,25 +552,13 @@ class ScheduleFragment : Fragment() {
         return System.currentTimeMillis() - timestamp > CACHE_VALID_DURATION_MS
     }
 
-    private fun getCacheTimestampText(): String {
-        val timestamp = prefs.getLong(CACHE_TIMESTAMP, 0)
-        if (timestamp == 0L) return ""
-
-        val dateFormat = java.text.SimpleDateFormat("dd.MM HH:mm", java.util.Locale.getDefault())
-        return dateFormat.format(java.util.Date(timestamp))
-    }
-
     private fun showCacheInfo() {
-        val cacheTime = getCacheTimestampText()
+        val timestamp = prefs.getLong(CACHE_TIMESTAMP, 0)
+        val cacheTime = java.text.SimpleDateFormat("HH:mm dd.MM", java.util.Locale.getDefault())
+            .format(java.util.Date(timestamp))
         binding.textCacheInfo.visibility = View.VISIBLE
-
-        if (isCacheExpired()) {
-            binding.textCacheInfo.text = "Данные от $cacheTime (устарели)"
-            binding.textCacheInfo.setTextColor(requireContext().getColor(R.color.error_color))
-        } else {
-            binding.textCacheInfo.text = "Данные от $cacheTime (офлайн)"
-            binding.textCacheInfo.setTextColor(requireContext().getColor(R.color.warning_color))
-        }
+        binding.textCacheInfo.text = "Данные от $cacheTime (офлайн)"
+        binding.textCacheInfo.setTextColor(requireContext().getColor(R.color.warning_color))
     }
 
     private fun showCacheExpiredMessage() {

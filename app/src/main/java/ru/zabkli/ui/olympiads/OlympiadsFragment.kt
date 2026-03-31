@@ -1,22 +1,30 @@
     package ru.zabkli.ui.olympiads
     import android.content.SharedPreferences
     import android.os.Bundle
+    import android.os.Handler
+    import android.os.Looper
     import android.view.LayoutInflater
     import android.view.View
     import android.view.ViewGroup
     import android.widget.TextView
+    import android.widget.Toast
     import androidx.appcompat.app.AppCompatActivity
     import androidx.fragment.app.Fragment
     import androidx.lifecycle.lifecycleScope
     import androidx.recyclerview.widget.LinearLayoutManager
+    import com.google.android.material.textfield.TextInputEditText
+    import com.google.android.material.textfield.TextInputLayout
     import kotlinx.coroutines.Dispatchers
     import kotlinx.coroutines.launch
     import kotlinx.coroutines.withContext
     import org.json.JSONArray
     import org.json.JSONObject
+    import ru.zabkli.AuthManager
     import ru.zabkli.R
+    import ru.zabkli.SettingsActivity
     import ru.zabkli.databinding.FragmentOlympiadsBinding
     import ru.zabkli.databinding.ItemOlympiadBinding
+    import java.io.OutputStreamWriter
     import java.net.ConnectException
     import java.net.HttpURLConnection
     import java.net.SocketTimeoutException
@@ -24,7 +32,7 @@
     import java.text.SimpleDateFormat
     import java.util.Calendar
     import java.util.Locale
-    
+
     class OlympiadsFragment : Fragment() {
         private var _binding: FragmentOlympiadsBinding? = null
         private val binding get() = _binding!!
@@ -47,6 +55,9 @@
     
         private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         private val outputDateFormat = SimpleDateFormat("dd.MM", Locale.getDefault())
+        private val DATE_REGEX = Regex("^\\d{4}-\\d{2}-\\d{2}$")
+        private val TIME_REGEX = Regex("^\\d{2}:\\d{2}$")
+        private val mainHandler = Handler(Looper.getMainLooper())
     
         companion object {
             private const val SETTINGS_ZABKLI = "settings_zabkli"
@@ -111,10 +122,192 @@
             super.onDestroyView()
             _binding = null
         }
-    
+
+        // ─────────────────────────────────────────────
+// Диалог редактирования олимпиады (editor / admin)
+// ─────────────────────────────────────────────
+
+        private fun showEditOlympiadDialog(olympiad: Olympiad) {
+            val view = layoutInflater.inflate(R.layout.dialog_edit_olympiad, null)
+
+            val layoutName      = view.findViewById<TextInputLayout>(R.id.layoutName)
+            val layoutSubject   = view.findViewById<TextInputLayout>(R.id.layoutSubject)
+            val layoutDateStart = view.findViewById<TextInputLayout>(R.id.layoutDateStart)
+            val layoutDateEnd   = view.findViewById<TextInputLayout>(R.id.layoutDateEnd)
+            val layoutTime      = view.findViewById<TextInputLayout>(R.id.layoutTime)
+            val layoutClasses   = view.findViewById<TextInputLayout>(R.id.layoutClasses)
+            val layoutLevel     = view.findViewById<TextInputLayout>(R.id.layoutLevel)
+
+            val editName        = view.findViewById<TextInputEditText>(R.id.editName)
+            val editSubject     = view.findViewById<TextInputEditText>(R.id.editSubject)
+            val editDescription = view.findViewById<TextInputEditText>(R.id.editDescription)
+            val editDateStart   = view.findViewById<TextInputEditText>(R.id.editDateStart)
+            val editDateEnd     = view.findViewById<TextInputEditText>(R.id.editDateEnd)
+            val editTime        = view.findViewById<TextInputEditText>(R.id.editTime)
+            val editClasses     = view.findViewById<TextInputEditText>(R.id.editClasses)
+            val editStage       = view.findViewById<TextInputEditText>(R.id.editStage)
+            val editLevel       = view.findViewById<TextInputEditText>(R.id.editLevel)
+            val editLink        = view.findViewById<TextInputEditText>(R.id.editLink)
+
+            // Предзаполняем текущими значениями
+            editName.setText(olympiad.name)
+            editSubject.setText(olympiad.subject)
+            editDescription.setText(olympiad.description ?: "")
+            editDateStart.setText(olympiad.date_start)
+            editDateEnd.setText(olympiad.date_end ?: "")
+            editTime.setText(olympiad.time ?: "")
+            editClasses.setText(olympiad.classes ?: "")
+            editStage.setText(olympiad.stage ?: "")
+            editLevel.setText(olympiad.level?.toString() ?: "1")
+            editLink.setText(olympiad.link ?: "")
+
+            val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Редактировать олимпиаду")
+                .setView(view)
+                .setPositiveButton("Сохранить", null) // переопределим ниже, чтобы не закрывать при ошибке
+                .setNegativeButton("Отмена") { d, _ -> d.dismiss() }
+                .create()
+
+            dialog.setOnShowListener {
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                    // Валидация
+                    var hasError = false
+
+                    val name = editName.text?.toString()?.trim() ?: ""
+                    if (name.isEmpty()) {
+                        layoutName.error = "Поле обязательно"
+                        hasError = true
+                    } else {
+                        layoutName.error = null
+                    }
+
+                    val subject = editSubject.text?.toString()?.trim() ?: ""
+                    if (subject.isEmpty()) {
+                        layoutSubject.error = "Поле обязательно"
+                        hasError = true
+                    } else {
+                        layoutSubject.error = null
+                    }
+
+                    val dateStart = editDateStart.text?.toString()?.trim() ?: ""
+                    if (dateStart.isEmpty() || !DATE_REGEX.matches(dateStart)) {
+                        layoutDateStart.error = "Формат ГГГГ-ММ-ДД"
+                        hasError = true
+                    } else {
+                        layoutDateStart.error = null
+                    }
+
+                    val dateEnd = editDateEnd.text?.toString()?.trim() ?: ""
+                    if (dateEnd.isNotEmpty() && !DATE_REGEX.matches(dateEnd)) {
+                        layoutDateEnd.error = "Формат ГГГГ-ММ-ДД"
+                        hasError = true
+                    } else {
+                        layoutDateEnd.error = null
+                    }
+
+                    val time = editTime.text?.toString()?.trim() ?: ""
+                    if (time.isNotEmpty() && !TIME_REGEX.matches(time)) {
+                        layoutTime.error = "Формат ЧЧ:ММ"
+                        hasError = true
+                    } else {
+                        layoutTime.error = null
+                    }
+
+                    val levelStr = editLevel.text?.toString()?.trim() ?: "1"
+                    val level = levelStr.toIntOrNull()
+                    if (level == null || level < 1 || level > 3) {
+                        layoutLevel.error = "Уровень 1-3"
+                        hasError = true
+                    } else {
+                        layoutLevel.error = null
+                    }
+
+                    if (hasError) return@setOnClickListener
+
+                    val body = JSONObject().apply {
+                        put("name", name)
+                        put("subject", subject)
+                        put("description", editDescription.text?.toString()?.trim()?.ifEmpty { null })
+                        put("date_start", dateStart)
+                        put("date_end", dateEnd.ifEmpty { null })
+                        put("time", time.ifEmpty { null })
+                        put("classes", editClasses.text?.toString()?.trim()?.ifEmpty { null })
+                        put("stage", editStage.text?.toString()?.trim()?.ifEmpty { null })
+                        put("level", level)
+                        put("link", editLink.text?.toString()?.trim()?.ifEmpty { null })
+                    }
+
+                    val token = AuthManager.getAccessToken(requireContext())
+                    if (token == null) {
+                        Toast.makeText(requireContext(), "Нет токена авторизации", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Отключаем кнопку на время запроса
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).isEnabled = false
+
+                    Thread {
+                        val error = patchOlympiad(olympiad.id, body, token)
+                        mainHandler.post {
+                            if (!isAdded) return@post
+                            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.isEnabled = true
+
+                            if (error == null) {
+                                Toast.makeText(requireContext(), "Олимпиада обновлена", Toast.LENGTH_SHORT).show()
+                                dialog.dismiss()
+                                loadAllOlympiads() // обновляем список
+                            } else {
+                                Toast.makeText(requireContext(), "Ошибка: $error", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }.start()
+                }
+            }
+
+            dialog.show()
+        }
+
+// ─────────────────────────────────────────────
+// PATCH /olympiads/{id}
+// ─────────────────────────────────────────────
+
+        private fun patchOlympiad(id: Int, body: JSONObject, token: String): String? {
+            return try {
+                val url = URL("$baseUrl/olympiads/$id")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.apply {
+                    requestMethod = "PATCH"
+                    connectTimeout = TIMEOUT_MS
+                    readTimeout = TIMEOUT_MS
+                    doOutput = true
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Authorization", "Bearer $token")
+                }
+                conn.outputStream.use { out ->
+                    OutputStreamWriter(out).use { it.write(body.toString()) }
+                }
+                return when (conn.responseCode) {
+                    200 -> null
+                    401 -> "Требуется авторизация (401)"
+                    403 -> "Доступ запрещён (403)"
+                    else -> {
+                        val errBody = conn.errorStream?.bufferedReader()?.readText() ?: ""
+                        try {
+                            JSONObject(errBody).optString("detail", "Ошибка ${conn.responseCode}")
+                        } catch (e: Exception) {
+                            "Ошибка ${conn.responseCode}"
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.message ?: "Неизвестная ошибка"
+            }
+        }
+
         private fun showOlympiadDetails(olympiad: Olympiad) {
             val view = layoutInflater.inflate(R.layout.dialog_olympiad_detail, null)
-    
+
             val textName = view.findViewById<TextView>(R.id.detailName)
             val textSubject = view.findViewById<TextView>(R.id.detailSubject)
             val textDescription = view.findViewById<TextView>(R.id.detailDescription)
@@ -122,13 +315,12 @@
             val textClasses = view.findViewById<TextView>(R.id.detailClasses)
             val textAddedBy = view.findViewById<TextView>(R.id.detailAddedBy)
             val textApprovedBy = view.findViewById<TextView>(R.id.detailApprovedBy)
-            val buttonLink =
-                view.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonLink)
-    
+            val buttonLink = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonLink)
+
             // Заполняем данные
             textName.text = olympiad.name
             textSubject.text = olympiad.subject
-    
+
             // Описание
             if (!olympiad.description.isNullOrEmpty()) {
                 textDescription.text = olympiad.description
@@ -136,7 +328,7 @@
             } else {
                 textDescription.visibility = View.GONE
             }
-    
+
             // Даты
             val startDate = formatDateString(olympiad.date_start)
             val endDate = formatDateString(olympiad.date_end)
@@ -146,7 +338,7 @@
                 } else {
                     "Даты: $startDate – $endDate"
                 }
-    
+
             // Классы
             if (!olympiad.classes.isNullOrEmpty()) {
                 textClasses.text = "Классы: ${olympiad.classes}"
@@ -154,7 +346,7 @@
             } else {
                 textClasses.visibility = View.GONE
             }
-    
+
             // Кнопка ссылки
             if (!olympiad.link.isNullOrEmpty()) {
                 buttonLink.visibility = View.VISIBLE
@@ -182,7 +374,7 @@
                 val creatorName = buildString {
                     if (!olympiad.created_by.first_name.isNullOrEmpty()) append(olympiad.created_by.first_name)
                     if (!olympiad.created_by.last_name.isNullOrEmpty()) {
-                        if (isNotEmpty()) append(" ")
+                        if (isNotEmpty()) append("  ")
                         append(olympiad.created_by.last_name)
                     }
                     if (isEmpty()) append(olympiad.created_by.username)
@@ -198,7 +390,7 @@
                 val approverName = buildString {
                     if (!olympiad.approved_by.first_name.isNullOrEmpty()) append(olympiad.approved_by.first_name)
                     if (!olympiad.approved_by.last_name.isNullOrEmpty()) {
-                        if (isNotEmpty()) append(" ")
+                        if (isNotEmpty()) append("  ")
                         append(olympiad.approved_by.last_name)
                     }
                     if (isEmpty()) append(olympiad.approved_by.username)
@@ -208,14 +400,24 @@
             } else {
                 textApprovedBy.visibility = View.GONE
             }
-    
-            // Создаем и показываем MaterialAlertDialog
-            com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+
+            // Проверяем роль: кнопка редактирования только для editor / admin
+            val role = AuthManager.getRole(requireContext())
+            val canEdit = role == SettingsActivity.UserType.EDITOR
+                    || role == SettingsActivity.UserType.ADMIN
+
+            val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
                 .setView(view)
-                .setPositiveButton("Закрыть") { dialog, _ ->
+                .setPositiveButton("Закрыть") { dialog, _ -> dialog.dismiss() }
+
+            if (canEdit) {
+                builder.setNeutralButton("Изменить") { dialog, _ ->
                     dialog.dismiss()
+                    showEditOlympiadDialog(olympiad)
                 }
-                .show()
+            }
+
+            builder.show()
         }
     
         // ─────────────────────────────────────────────
