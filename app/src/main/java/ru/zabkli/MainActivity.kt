@@ -27,10 +27,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
 
-    private val listItemsForClassChange = arrayOf("5 класс I гр.", "6 класс I гр.", "7 класс I гр.", "8 класс I гр.",
-        "5 класс II гр.", "6 класс II гр.", "7 класс II гр.", "8 класс II гр.",
-        "9 А  I гр.", "9 Б  I гр.", "10 А  I гр.", "10 Б  I гр.", "11 А  I гр.", "11 Б  I гр.",
-        "9 А  II гр.", "9 Б  II гр.", "10 А  II гр.", "10 Б  II гр.", "11 А  II гр.", "11 Б  II гр.",)
+    private val listItemsForClassChange = arrayOf(
+        "5 класс I гр.", "5 класс II гр.",
+        "6 класс I гр.", "6 класс II гр.",
+        "7 класс I гр.", "7 класс II гр.",
+        "8 класс I гр.", "8 класс II гр.",
+        "9 А  I гр.", "9 Б  I гр.", "9 А  II гр.", "9 Б  II гр.",
+        "10 А  I гр.", "10 Б  I гр.", "10 А  II гр.", "10 Б  II гр.",
+        "11 А  I гр.", "11 Б  I гр.", "11 А  II гр.", "11 Б  II гр."
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val settingsZabKLI = getSharedPreferences(
