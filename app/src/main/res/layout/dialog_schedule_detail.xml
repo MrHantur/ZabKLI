@@ -36,6 +36,7 @@
             android:layout_marginTop="4dp"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Chip"
             android:background="@drawable/tag_purple"
+            android:textColor="@color/black"
             tools:text="Урок № 1" />
 
         <!-- Время -->

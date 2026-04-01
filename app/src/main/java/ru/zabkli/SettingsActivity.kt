@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.PrintWriter
 import java.net.ConnectException
+import java.net.HttpURLConnection
 import java.net.Socket
+import java.net.URL
 
 class SettingsActivity : AppCompatActivity() {
     private val SETTINGS_ZABKLI = "settings_zabkli"
@@ -25,6 +27,7 @@ class SettingsActivity : AppCompatActivity() {
     private var isSurveyDataSent: Boolean = false
     private var isChangedFunction: Boolean = false
     private var isDarkMode: Boolean = false
+    private val BASE_URL = "http://10.0.2.2:1717"
 
     // ──────────────────────────────────────────────────────────────────────────
     // Lifecycle
@@ -262,18 +265,22 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     fun survey(view: View) {
-        if ((currentIdOfQuestionInSurvey < 3) and (!isSurveyDataSent)) {
+        if (currentIdOfQuestionInSurvey < 3 && !isSurveyDataSent) {
             val questions = listOf(
                 "Как Вы оцените дизайн приложения?",
                 "Как Вы оцените функционал приложения?",
                 "Как Вы оцените удовлетворённость приложением в целом?"
             )
-            val ratingdialog = AlertDialog.Builder(this)
-            ratingdialog.setMessage(questions[currentIdOfQuestionInSurvey])
-            val linearlayout: View = layoutInflater.inflate(R.layout.ratingdialog, null)
-            ratingdialog.setView(linearlayout)
-            val rating = linearlayout.findViewById<RatingBar>(R.id.ratingbar)
-            ratingdialog
+
+            val ratingDialog = AlertDialog.Builder(this)
+            ratingDialog.setMessage(questions[currentIdOfQuestionInSurvey])
+
+            val linearLayout: View = layoutInflater.inflate(R.layout.ratingdialog, null)
+            ratingDialog.setView(linearLayout)
+
+            val rating = linearLayout.findViewById<RatingBar>(R.id.ratingbar)
+
+            ratingDialog
                 .setPositiveButton("Готово") { dialog, _ ->
                     if (rating.rating.toInt() != 0) {
                         answersInSurvey.add(rating.rating.toInt())
@@ -281,34 +288,93 @@ class SettingsActivity : AppCompatActivity() {
                         dialog.dismiss()
                         survey(view)
                     } else {
-                        Toast.makeText(applicationContext,
-                            "Нажмите на звёздочку, чтобы дать оценку!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            applicationContext,
+                            "Нажмите на звёздочку, чтобы дать оценку!",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
                 .setNegativeButton("Выйти") { dialog, _ -> dialog.cancel() }
-            ratingdialog.create()
-            ratingdialog.show()
+
+            ratingDialog.create().show()
         } else {
             Toast.makeText(applicationContext, "Анкетирование пройдено!", Toast.LENGTH_SHORT).show()
-            if (!isSurveyDataSent) {
-                var surveyResults = "4$"
-                surveyResults += answersInSurvey[0].toString() + "$" +
-                        answersInSurvey[1].toString() + "$" +
-                        answersInSurvey[2].toString() + "$"
-                lifecycleScope.launch { sendSurveyData(surveyResults) }
+
+            if (!isSurveyDataSent && answersInSurvey.size >= 3) {
+                lifecycleScope.launch {
+                    sendSurveyData(
+                        answersInSurvey[0],
+                        answersInSurvey[1],
+                        answersInSurvey[2]
+                    )
+                }
                 isSurveyDataSent = true
             }
         }
     }
 
-    private suspend fun sendSurveyData(surveyResults: String) = withContext(Dispatchers.IO) {
+    private suspend fun sendSurveyData(
+        ratingDesign: Int,
+        ratingFunctionality: Int,
+        ratingSatisfaction: Int
+    ) = withContext(Dispatchers.IO) {
         try {
-            val client = Socket("185.177.216.236", 1717)
-            PrintWriter(client.getOutputStream(), true).println(surveyResults)
-        } catch (excep: ConnectException) {
-            runOnUiThread {
-                Toast.makeText(applicationContext,
-                    "Не удалось получить ответ от сервера", Toast.LENGTH_LONG).show()
+            val url = URL("$BASE_URL/public/survey")
+            val conn = url.openConnection() as HttpURLConnection
+
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 10_000
+            conn.doOutput = true
+            conn.setRequestProperty("Content-Type", "application/json")
+            conn.setRequestProperty("Accept", "application/json")
+
+            // Добавляем токен авторизации если пользователь залогинен
+            AuthManager.getAccessToken(this@SettingsActivity)?.let { token ->
+                conn.setRequestProperty("Authorization", "Bearer $token")
+            }
+
+            // Формируем JSON согласно OpenAPI spec
+            val jsonBody = """
+            {
+                "rating_design": $ratingDesign,
+                "rating_functionality": $ratingFunctionality,
+                "rating_satisfaction": $ratingSatisfaction
+            }
+        """.trimIndent()
+
+            conn.outputStream.use { out ->
+                out.write(jsonBody.toByteArray())
+            }
+
+            val responseCode = conn.responseCode
+
+            withContext(Dispatchers.Main) {
+                if (responseCode == 200) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Спасибо за ваш отзыв!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    Toast.makeText(
+                        applicationContext,
+                        "Ошибка отправки: $responseCode",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            conn.disconnect()
+
+        } catch (e: Exception) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    applicationContext,
+                    "Не удалось отправить данные: ${e.message}",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }

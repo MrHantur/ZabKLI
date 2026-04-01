@@ -1,10 +1,12 @@
 package ru.zabkli.ui.schedule
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Paint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -31,6 +34,10 @@ import java.net.SocketTimeoutException
 import java.net.URL
 import java.net.UnknownHostException
 import java.util.Calendar
+
+private fun themeColor(context: Context, attr: Int): Int {
+    return MaterialColors.getColor(context, attr, 0)
+}
 
 class ScheduleFragment : Fragment() {
     private var _binding: FragmentScheduleBinding? = null
@@ -222,7 +229,7 @@ class ScheduleFragment : Fragment() {
             textAddedBy.visibility = View.GONE
         }
 
-        if (schedule.approved_by != null) {
+        if (schedule.approved_by != null && schedule.approved_by.username != "admin") {
             // Кто утвердил
             val approverName = buildString {
                 if (!schedule.approved_by.first_name.isNullOrEmpty()) append(schedule.approved_by.first_name)
@@ -682,8 +689,10 @@ class ScheduleFragment : Fragment() {
 
         // Ищем следующий урок (игнорируем отменённые)
         val nextLesson = lessons
-            .filter { it.timeStart != null && it.status != "cancelled" }
-            .firstOrNull { parseMinutes(it.timeStart!!) > currentTimeMinutes }
+            .asSequence()
+            .filter { it.status != "cancelled" && !it.timeStart.isNullOrBlank() }
+            .sortedBy { parseMinutes(it.timeStart!!) }
+            .firstOrNull { parseMinutes(it.timeStart!!) >= currentTimeMinutes }
 
         if (nextLesson != null) {
             binding.labelNextLesson.visibility = View.VISIBLE
@@ -715,12 +724,15 @@ class ScheduleFragment : Fragment() {
             // Прячем статус отмены и сбрасываем стили (ведь отменённые мы уже отфильтровали)
             itemBinding.lessonStatus.visibility = View.GONE
             itemBinding.subjectName.paintFlags = itemBinding.subjectName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-            itemBinding.subjectName.setTextColor(requireContext().getColor(android.R.color.black))
+            itemBinding.subjectName.setTextColor(
+                themeColor(requireContext(), com.google.android.material.R.attr.colorOnSurface)
+            )
 
         } else {
             binding.labelNextLesson.visibility = View.GONE
             binding.nextLessonCard.root.visibility = View.GONE
         }
+        Log.d("Schedule", "currentWeekday=$currentWeekday, today=$todayWeekday")
     }
 
     private fun parseMinutes(time: String): Int {
@@ -893,7 +905,9 @@ class ScheduleFragment : Fragment() {
                 holder.subjectName.setTextColor(holder.itemView.context.getColor(R.color.error_color))
             } else {
                 holder.subjectName.paintFlags = holder.subjectName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                holder.subjectName.setTextColor(holder.itemView.context.getColor(android.R.color.black))
+                holder.subjectName.setTextColor(
+                    themeColor(holder.itemView.context, com.google.android.material.R.attr.colorOnSurface)
+                )
             }
 
             holder.lessonTime.text = when {
