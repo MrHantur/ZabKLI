@@ -1,56 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?selectableItemBackground"
-    android:paddingStart="10dp"
-    android:paddingTop="5dp"
-    android:paddingEnd="10dp"
-    android:paddingBottom="5dp">
+    android:padding="8dp">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/olympiad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="16dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1A000000"
+        app:cardCornerRadius="16dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" >
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingEnd="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/olympiadName"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginStart="8dp"
+                android:text="Olympiad name"
+                android:paddingStart="4dp"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
-                <!-- Title, secondary and supporting text -->
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/flexTags"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:flexDirection="row"
+                app:flexWrap="wrap"
+                app:alignItems="center"
+                app:justifyContent="flex_start">
 
                 <TextView
-                    android:id="@+id/olympiadName"
+                    android:id="@+id/tagSubject"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Olympiad name"
-                    android:textAppearance="?attr/textAppearanceHeadline6" />
-
-                <TextView
-                    android:id="@+id/olympiadDescription"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
-                    android:text="Description of olympiad"
-                    android:textAppearance="?attr/textAppearanceBody2"
-                    android:textColor="?android:attr/textColorSecondary" />
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="Subject"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/tag_green"
+                    android:textStyle="bold" />
 
-            </LinearLayout>
+                <TextView
+                    android:id="@+id/tagClasses"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="Classes"
+                    android:textColor="@android:color/black"
+                    android:background="@drawable/tag_purple"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tagDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="Date"
+                    android:textColor="@android:color/black"
+                    android:background="@drawable/tag_blue"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tagTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="6dp"
+                    android:text="Time"
+                    android:textColor="@android:color/white"
+                    android:background="@drawable/tag_grey"
+                    android:textStyle="bold" />
+
+            </com.google.android.flexbox.FlexboxLayout>
+
         </LinearLayout>
 
     </com.google.android.material.card.MaterialCardView>

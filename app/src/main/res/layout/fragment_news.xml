@@ -37,7 +37,6 @@
             android:textAppearance="?attr/textAppearanceHeadline6"
             android:gravity="center"
             android:layout_marginTop="16dp" />
-
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

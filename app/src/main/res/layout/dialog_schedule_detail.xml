@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Название предмета -->
+        <TextView
+            android:id="@+id/detailSubject"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorOnSurface"
+            tools:text="Алгебра" />
+
+        <!-- Номер урока -->
+        <TextView
+            android:id="@+id/detailLessonNum"
+            style="@style/Widget.MaterialComponents.Chip.Choice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:focusable="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginTop="4dp"
+            android:textAppearance="@style/TextAppearance.MaterialComponents.Chip"
+            android:background="@drawable/tag_purple"
+            android:textColor="@color/black"
+            tools:text="Урок № 1" />
+
+        <!-- Время -->
+        <TextView
+            android:id="@+id/detailTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="14sp"
+            app:drawableStartCompat="@drawable/ic_timer"
+            android:drawablePadding="8dp"
+            tools:text="Время: 08:30 – 09:15" />
+
+        <!-- Учитель -->
+        <TextView
+            android:id="@+id/detailTeacher"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            app:drawableStartCompat="@drawable/ic_menu_olympiads"
+            android:drawablePadding="8dp"
+            tools:text="Учитель: Иванов И.И." />
+
+        <!-- Кабинет -->
+        <TextView
+            android:id="@+id/detailRoom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            app:drawableStartCompat="@drawable/ic_door"
+            android:drawablePadding="8dp"
+            tools:text="Кабинет: 101" />
+
+        <!-- Статус (если отменён) -->
+        <TextView
+            android:id="@+id/detailStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="14sp"
+            android:textColor="@color/error_color"
+            android:textStyle="bold"
+            app:drawableStartCompat="@drawable/ic_report"
+            android:drawablePadding="8dp"
+            tools:text="Статус: ОТМЕНЁН" />
+
+        <TextView
+            android:id="@+id/detailAddedBy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="13sp"
+            android:drawablePadding="6dp"
+            app:drawableStartCompat="@drawable/ic_contribute"
+            tools:text="Добавил: PLACEHOLDER" />
+
+        <TextView
+            android:id="@+id/detailApprovedBy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="13sp"
+            android:drawablePadding="6dp"
+            app:drawableStartCompat="@drawable/ic_accepted"
+            tools:text="Утвердил: PLACEHOLDER" />
+
+    </LinearLayout>
+</ScrollView>

@@ -63,6 +63,62 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <LinearLayout
+                android:id="@+id/accountSection"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:padding="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground">
+
+                <ImageView
+                    android:id="@+id/avatar"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:scaleType="fitCenter"
+                    android:padding="16dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/circle_user_unknown"
+                    android:src="@drawable/profile_unknown_user" />
+
+                <!-- Контейнер для текста -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:id="@+id/title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_account"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_anonymous"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                    <TextView
+                        android:id="@+id/role"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/settings_role"
+                        android:textSize="18sp"
+                        android:layout_marginTop="4dp"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
