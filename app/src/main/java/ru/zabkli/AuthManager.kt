@@ -25,7 +25,7 @@ object AuthManager {
     private const val KEY_USER_ID  = "user_id"
     private const val KEY_KARMA    = "karma"
 
-    private const val BASE_URL = "http://10.0.2.2:1717"
+    private const val BASE_URL = "http://zab.mrhantur.su:1717"
 
     fun isLoggedIn(context: Context): Boolean =
         prefs(context).getString(KEY_ACCESS, null) != null

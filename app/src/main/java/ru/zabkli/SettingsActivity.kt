@@ -27,7 +27,7 @@ class SettingsActivity : AppCompatActivity() {
     private var isSurveyDataSent: Boolean = false
     private var isChangedFunction: Boolean = false
     private var isDarkMode: Boolean = false
-    private val BASE_URL = "http://10.0.2.2:1717"
+    private val BASE_URL = "http://zab.mrhantur.su:1717"
 
     // ──────────────────────────────────────────────────────────────────────────
     // Lifecycle

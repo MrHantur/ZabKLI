@@ -73,7 +73,7 @@ class ScheduleFragment : Fragment() {
     private var isInitialLoad: Boolean = true
 
     companion object {
-        private const val BASE_URL = "http://10.0.2.2:1717"
+        private const val BASE_URL = "http://zab.mrhantur.su:1717"
         private const val SETTINGS_ZABKLI = "settings_zabkli"
         private const val CACHE_SCHEDULE = "cache_schedule"
         private const val CACHE_TIMESTAMP = "cache_timestamp"
