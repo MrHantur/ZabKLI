@@ -1,4 +1,6 @@
     package ru.zabkli.ui.olympiads
+
+    import android.util.Log
     import android.content.SharedPreferences
     import android.os.Bundle
     import android.os.Handler
@@ -51,7 +53,7 @@
         private var currentSubjectIndex = 0
         private var currentSortType = SortType.DATE // Сортировка по дате по умолчанию
         private var isSortAscending = false // По умолчанию новые олимпиады сверху
-        private val baseUrl = "http://10.0.2.2:1717"
+        private val baseUrl = "http://zab.mrhantur.su:1717"
     
         private val inputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         private val outputDateFormat = SimpleDateFormat("dd.MM", Locale.getDefault())
@@ -126,7 +128,9 @@
 
         private fun setupAddButton() {
             val role = AuthManager.getRole(requireContext())
-            val canEdit = role == SettingsActivity.UserType.EDITOR || role == SettingsActivity.UserType.ADMIN
+            val canEdit = (role == SettingsActivity.UserType.EDITOR
+                    || role == SettingsActivity.UserType.ADMIN) &&
+                    (!isUsingCache)
 
             if (canEdit) {
                 binding.fabAddOlympiad.visibility = View.VISIBLE
@@ -737,7 +741,7 @@
     
             val cacheTime = getCacheTimestampText()
             _binding?.textCacheInfo?.visibility = View.VISIBLE
-    
+
             if (isCacheExpired()) {
                 _binding?.textCacheInfo?.text = "Данные от $cacheTime (устарели)"
                 _binding?.textCacheInfo?.setTextColor(requireContext().getColor(R.color.error_color))
@@ -893,8 +897,7 @@
                     val response = withContext(Dispatchers.IO) {
                         fetchOlympiads()
                     }
-    
-                    // FIX: Проверяем, что фрагмент всё ещё активен перед доступом к binding
+
                     if (!isAdded || _binding == null) return@launch
     
                     when (response) {
@@ -912,7 +915,6 @@
                             if (loadCachedOlympiads()) {
                                 isUsingCache = true
                                 allOlympiads = cachedOlympiads
-                                showCacheInfo()
                                 updateSubjectsFromData()
                                 filterOlympiadsLocally()
                             } else {
@@ -921,14 +923,12 @@
                         }
                     }
                 } catch (e: Exception) {
-                    // FIX: Проверяем, что фрагмент всё ещё активен
                     if (!isAdded || _binding == null) return@launch
     
                     // Пытаемся загрузить из кэша при ошибке
                     if (loadCachedOlympiads()) {
                         isUsingCache = true
                         allOlympiads = cachedOlympiads
-                        showCacheInfo()
                         updateSubjectsFromData()
                         filterOlympiadsLocally()
                     } else {
@@ -1066,6 +1066,7 @@
             if (!isAdded || _binding == null) return
             hideAllErrors()
             hideCacheInfo()
+            if (isUsingCache) showCacheInfo()
             _binding?.progressBar?.visibility = View.GONE
             olympiadsList = olympiads
     

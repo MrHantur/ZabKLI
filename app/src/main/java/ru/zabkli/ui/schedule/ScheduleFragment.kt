@@ -1,6 +1,7 @@
 package ru.zabkli.ui.schedule
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.graphics.Paint
 import android.os.Bundle
@@ -247,8 +248,9 @@ class ScheduleFragment : Fragment() {
 
         // Проверяем роль: кнопка редактирования только для editor / admin
         val role = AuthManager.getRole(requireContext())
-        val canEdit = role == SettingsActivity.UserType.EDITOR
-                || role == SettingsActivity.UserType.ADMIN
+        val canEdit = (role == SettingsActivity.UserType.EDITOR
+                || role == SettingsActivity.UserType.ADMIN) &&
+                (!isUsingCache)
 
         val builder = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
             .setView(view)
@@ -497,7 +499,6 @@ class ScheduleFragment : Fragment() {
         for (i in 0 until jsonArray.length()) {
             val obj = jsonArray.getJSONObject(i)
 
-            // Парсинг created_by и approved_by (как выше в fetchSchedule)
             val createdByObj = obj.optJSONObject("created_by")
             val createdBy = if (createdByObj != null) {
                 UserInfo(
@@ -593,23 +594,9 @@ class ScheduleFragment : Fragment() {
         showLoading(true)
 
         Thread {
-            val result = fetchSchedule(currentWeekday, className)
-
-            // При первом заходе — параллельно грузим следующий день
-            if (isInitialLoad) {
-                isInitialLoad = false
-                val nextWeekday = if (currentWeekday >= 5) 0 else currentWeekday + 1
-                Thread {
-                    fetchSchedule(nextWeekday, className).let { nextResult ->
-                        if (nextResult is ScheduleResult.Success) {
-                            // Объединяем с основным кэшем (если он уже сохранён)
-                            val existing = cachedSchedule.toMutableList()
-                            val nextDayIds = nextResult.allLessons.map { it.id }.toSet()
-                            val merged = existing.filter { it.id !in nextDayIds } + nextResult.allLessons
-                            cachedSchedule = merged.sortedBy { it.lessonNum }
-                        }
-                    }
-                }.start()
+            var result: ScheduleResult = ScheduleResult.NoInternet
+            if (prefs.getBoolean("changedFunction", true)) {
+                result = fetchSchedule(currentWeekday, className)
             }
 
             if (!isAdded) return@Thread
@@ -764,6 +751,7 @@ class ScheduleFragment : Fragment() {
                 }
 
                 val responseCode = conn.responseCode
+                Log.d("Schedule", "responseCode=${responseCode}")
                 if (responseCode != HttpURLConnection.HTTP_OK) {
                     conn.disconnect()
                     return ScheduleResult.ServerError
@@ -782,7 +770,7 @@ class ScheduleFragment : Fragment() {
                 for (i in 0 until dataArray.length()) {
                     val obj = dataArray.getJSONObject(i)
 
-                    // 🔹 Парсим created_by
+                    // Парсим created_by
                     val createdByObj = obj.optJSONObject("created_by")
                     val createdBy = if (createdByObj != null) {
                         UserInfo(
@@ -794,7 +782,7 @@ class ScheduleFragment : Fragment() {
                         UserInfo(username = "unknown")
                     }
 
-                    // 🔹 Парсим approved_by
+                    // Парсим approved_by
                     val approvedByObj = obj.optJSONObject("approved_by")
                     val approvedBy = if (approvedByObj != null) {
                         UserInfo(
@@ -804,7 +792,7 @@ class ScheduleFragment : Fragment() {
                         )
                     } else null
 
-                    // 🔹 Создаём объект Schedule с новыми полями
+                    // Создаём объект Schedule с новыми полями
                     val lesson = Schedule(
                         id = obj.optInt("id"),
                         className = obj.optString("class_name", ""),
@@ -816,8 +804,8 @@ class ScheduleFragment : Fragment() {
                         timeStart = if (obj.has("time_start") && !obj.isNull("time_start")) obj.getString("time_start") else null,
                         timeEnd = if (obj.has("time_end") && !obj.isNull("time_end")) obj.getString("time_end") else null,
                         status = if (obj.has("status") && !obj.isNull("status")) obj.getString("status") else "active",
-                        created_by = createdBy,      // ← передаём
-                        approved_by = approvedBy     // ← передаём
+                        created_by = createdBy,
+                        approved_by = approvedBy
                     )
                     allLessons.add(lesson)
                 }

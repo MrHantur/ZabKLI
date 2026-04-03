@@ -37,7 +37,7 @@
     <string name="edit_schedule_description">Нажмите, чтобы внести изменение в расписание самостоятельно
         (при отправке сохраняются некоторые данные о вас, чтобы можно было понятно кто вы)</string>
 
-    <string name="ui_next_lesson_text">Следующий урок:</string>
+    <string name="ui_next_lesson_text">Следующий урок</string>
     <string name="ui_text_schedule">Расписание</string>
     <string name="loading_lesson_name">Загрузка уроков…</string>
     <string name="loading_lesson_time">Загрузка времени уроков…</string>

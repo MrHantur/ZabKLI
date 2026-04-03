@@ -8,8 +8,6 @@
     android:tag="schedule_fragment"
     tools:context=".ui.schedule.ScheduleFragment">
 
-
-
     <!-- ── AppBar с навигацией по дням ── -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"

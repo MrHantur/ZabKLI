@@ -10,7 +10,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Единая точка доступа к данным авторизации.
  * Хранит access_token, refresh_token, роль, имя пользователя и дополнительную информацию
  * в SharedPreferences "auth_zabkli".
  */
