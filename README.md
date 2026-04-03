@@ -1,9 +1,4 @@
-Python Server (TCP) - https://github.com/MrHantur/ZabKLI-server-old/blob/main/pyserver.py
+## ZabKLI - Путеводитель ЗабКЛИ
+Это мобильное приложение, собирающее информацию, которую необходимо знать лицеисту, в одном месте (расписание, олимпиады, новости)
 
-Mobile Application Kotlin Code - https://github.com/MrHantur/ZabKLI/tree/master/app/src/main/java/ru/zabkli
-
-Mobile Application Layout Code - https://github.com/MrHantur/ZabKLI/tree/master/app/src/main/res/layout
-
----------------------
-
-Download App Link - https://mrhantur.ru/wp-content/uploads/2024/12/zabkli-1.apk
+## Хотя в приложении есть встроенные данные и хэширование полученных данных (на случай отсутствия интернета), но для обновления данных используется [сервер](https://github.com/MrHantur/ZabServer)
